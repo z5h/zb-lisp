@@ -28,6 +28,7 @@ function newCons(car, cdr){
 
 var NULL = {
   type : "cons",
+  isNull : true,
   toString : function(){
     return "()";
   },
@@ -115,7 +116,9 @@ var parser = {
     } else if (this.nonsymbol.indexOf(n)<0){
       return this.parseSymbol();
     } else if ("." == n) {
-      //...
+      //only allowed within parseExpression
+      this.fwd();
+      return "."; 
     }
 
     return null;
@@ -133,9 +136,19 @@ var parser = {
     var head = newCons(NULL, NULL);
     var tail = head;
     while (this.chr() !== ")"){
-      tail.setCar(this.parseNext());
-      tail.setCdr(newCons(NULL, NULL));
-      tail = tail.cdr;
+      var v = this.parseNext();
+      if (v === "."){
+        tail.setCdr(this.parseNext());
+        this.skip();
+        if (this.chr() !== ")"){
+          throw "expected ')' at " + this.position;
+        }
+        break;
+      } else {
+        tail.setCar(v);
+        tail.setCdr(newCons(NULL, NULL));
+        tail = tail.cdr;
+      }
     }
     this.fwd();
     return head;
