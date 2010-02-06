@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <script type="text/javascript" src="header.js"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      var p = Object.create(parser);
+      p.text = Loader.load("test.scm");
+      var result = p.parse();
+      document.write(result);
+    </script>
+  </body>
+</html>
+
