@@ -1,0 +1,10 @@
+A Lispy language implemented in Javascript.
+Short term goals:
+1. get something working that one can write programs in.
+2. tail call optimization support.
+3. constinuations.
+4. JavaScript bridge.
+
+Long term goals:
+1. slowly work towards R5RS.
+2. make it faster.
