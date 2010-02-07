@@ -24,11 +24,11 @@ var Types = function(){
         var head = this;
         var s = "(";
         s += head.car.toString() + " ";
-        while ((head.cdr != NULL_CONS) && (head.cdr.type == "cons")){
+        while ((head.cdr !== NULL_CONS) && (head.cdr.type === "cons")){
           head = head.cdr;
           s += head.car.toString() + " ";
         }
-        if (head.cdr == NULL_CONS){
+        if (head.cdr === NULL_CONS){
           s += ")";
         } else {
           s += " . " + head.cdr.toString() + ")";
@@ -69,10 +69,10 @@ var Types = function(){
   }
 
   function isNull(x){
-    return x == NULL_CONS;
+    return x === NULL_CONS;
   }
   function isList(x){
-    return x.type == "cons" && (x == NULL_CONS || isList(cdr(x)));
+    return x.type === "cons" && (x === NULL_CONS || isList(cdr(x)));
   }
   return {
     newCons : newCons,
@@ -126,17 +126,17 @@ var Parser = function(){
     var n = chr(p);
     if (eof(p)){
       return null;
-    } else if (LPAREN == n){
+    } else if (LPAREN === n){
       return parseExpression(p);
-    } else if (QUOTES == n) {
+    } else if (QUOTES === n) {
       return parseString(p);
     } else if (DIGITS.indexOf(n)>-1){
       return parseNumber(p);
-    } else if (QUOTE == n){
+    } else if (QUOTE === n){
       return parseQuote(p);
     } else if (NONSYMBOL.indexOf(n)<0){
       return parseSymbol(p);
-    } else if (DOT == n) {
+    } else if (DOT === n) {
       //only allowed within parseExpression
       fwd(p);
       return DOT; 
@@ -154,10 +154,10 @@ var Parser = function(){
 
     while (chr(p) !== RPAREN){
       var v = parseNext(p);
-      if (v == DOT){
+      if (v === DOT){
         improperList = true;
         v = parseNext(p);
-        if (v == DOT){
+        if (v === DOT){
           throw "unexpected '.' at" + p.position;
         }
         data[data.length] = v;
@@ -170,7 +170,7 @@ var Parser = function(){
       }
     }
 
-    if (data.length==0){
+    if (data.length === 0){
       fwd(p);
       return Types.NULL_CONS;
     }
