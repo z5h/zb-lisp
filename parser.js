@@ -1,5 +1,14 @@
 var Types = function(){
 
+  var NULL_CONS = {
+    type : "cons",
+    isNull : true,
+    toString : function(){
+      return "()";
+    },
+  };
+
+
   function newCons(car, cdr){
     return {
       type : "cons",
@@ -15,7 +24,7 @@ var Types = function(){
         var head = this;
         var s = "(";
         s += head.car.toString() + " ";
-        while ((head.cdr !== NULL_CONS) && (head.cdr.type == "cons")){
+        while ((head.cdr != NULL_CONS) && (head.cdr.type == "cons")){
           head = head.cdr;
           s += head.car.toString() + " ";
         }
@@ -29,15 +38,7 @@ var Types = function(){
     };
   }
 
-  var NULL_CONS = {
-    type : "cons",
-    isNull : true,
-    toString : function(){
-      return "()";
-    },
-  };
-
-  function newString(value){
+   function newString(value){
     return  {
       type : "string",
       value : value,
@@ -87,6 +88,11 @@ var Parser = function(){
   var WHITESPACE = " \t\n\r\f";
   var DIGITS = "0123456789";
   var NONSYMBOL = " \n\n\r\f()`\"\\[]'@,.";
+  var LPAREN = "(";
+  var RPAREN = ")";
+  var QUOTES = "\"";
+  var QUOTE = "'";
+  var DOT = ".";
   var EOF = [];
 
   function newParser(text){
@@ -120,18 +126,20 @@ var Parser = function(){
     var n = chr(p);
     if (eof(p)){
       return null;
-    } else if ("(" == n){
+    } else if (LPAREN == n){
       return parseExpression(p);
-    } else if ("\"" == n) {
+    } else if (QUOTES == n) {
       return parseString(p);
     } else if (DIGITS.indexOf(n)>-1){
       return parseNumber(p);
+    } else if (QUOTE == n){
+      return parseQuote(p);
     } else if (NONSYMBOL.indexOf(n)<0){
       return parseSymbol(p);
-    } else if ("." == n) {
+    } else if (DOT == n) {
       //only allowed within parseExpression
       fwd(p);
-      return "."; 
+      return DOT; 
     }
 
     return null;
@@ -140,9 +148,47 @@ var Parser = function(){
   function parseExpression(p){
     fwd(p); //skip past first "("
     skip(p);//skip any WHITESPACE after "("
-    //empty list special case
-    var n = Types.NULL_CONS;
-    if (chr(p) == ")"){
+
+    var data = new Array();
+    var improperList = false;
+
+    while (chr(p) !== RPAREN){
+      var v = parseNext(p);
+      if (v == DOT){
+        improperList = true;
+        v = parseNext(p);
+        if (v == DOT){
+          throw "unexpected '.' at" + p.position;
+        }
+        data[data.length] = v;
+        skip(p);
+        if (chr(p) !== RPAREN){
+          throw "expected ')' at" + p.position;
+        }
+      } else {
+        data[data.length] = v;
+      }
+    }
+
+    if (data.length==0){
+      fwd(p);
+      return Types.NULL_CONS;
+    }
+
+    var cons = improperList 
+               ? Types.newCons(data[data.length-2], data[data.length-1]) 
+               : Types.newCons(data[data.length-1], Types.NULL_CONS);
+
+    var i = improperList ? data.length -3 : data.length - 2;
+
+    while (i>-1){
+      cons = Types.newCons(data[i--], cons);
+    }
+
+    fwd(p);
+    return cons;
+    /*var n = Types.NULL_CONS;
+    if (chr(p) == RPAREN){
       fwd(p);
       return n;
     }
@@ -151,12 +197,12 @@ var Parser = function(){
     var tail = head;
     var last = tail;
 
-    while (chr(p) !== ")"){
+    while (chr(p) !== RPAREN){
       var v = parseNext(p);
       if (v === "."){
         last.setCdr(parseNext(p));
         skip(p);
-        if (chr(p) !== ")"){
+        if (chr(p) !== RPAREN){
           throw "expected ')' at " + p.position;
         }
         break;
@@ -168,14 +214,20 @@ var Parser = function(){
       }
     }
     fwd(p);
-    return head;
+    return head;*/
+  }
+
+  function parseQuote(p){
+    fwd(p);
+    var quote = Types.newSymbol("quote");
+    return Types.newCons(quote, Types.newCons(parseNext(p), Types.NULL_CONS));
   }
 
   function parseString(p){
     //we start on ", consume it
     fwd(p);
     var start = p.position;
-    while(chr(p) !== "\""){
+    while(chr(p) !== QUOTES){
       fwd(p);
     }
     var end = p.position;
