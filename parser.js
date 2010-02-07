@@ -187,34 +187,6 @@ var Parser = function(){
 
     fwd(p);
     return cons;
-    /*var n = Types.NULL_CONS;
-    if (chr(p) == RPAREN){
-      fwd(p);
-      return n;
-    }
-
-    var head = Types.newCons(n,n);
-    var tail = head;
-    var last = tail;
-
-    while (chr(p) !== RPAREN){
-      var v = parseNext(p);
-      if (v === "."){
-        last.setCdr(parseNext(p));
-        skip(p);
-        if (chr(p) !== RPAREN){
-          throw "expected ')' at " + p.position;
-        }
-        break;
-      } else {
-        last = tail;
-        tail.setCar(v);
-        tail.setCdr(Types.newCons(n,n));
-        tail = tail.cdr;
-      }
-    }
-    fwd(p);
-    return head;*/
   }
 
   function parseQuote(p){
