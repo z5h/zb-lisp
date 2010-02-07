@@ -12,9 +12,10 @@ function newCons(car, cdr){
     toString : function(){
       var head = this;
       var s = "(";
+      s += head.car.toString() + " ";
       while ((head.cdr !== NULL) && (head.cdr.type == "cons")){
-        s += head.car.toString() + " ";
         head = head.cdr;
+        s += head.car.toString() + " ";
       }
       if (head.cdr == NULL){
         s += ")";
@@ -135,16 +136,19 @@ var parser = {
 
     var head = newCons(NULL, NULL);
     var tail = head;
+    var last = tail;
+
     while (this.chr() !== ")"){
       var v = this.parseNext();
       if (v === "."){
-        tail.setCdr(this.parseNext());
+        last.setCdr(this.parseNext());
         this.skip();
         if (this.chr() !== ")"){
           throw "expected ')' at " + this.position;
         }
         break;
       } else {
+        last = tail;
         tail.setCar(v);
         tail.setCdr(newCons(NULL, NULL));
         tail = tail.cdr;
