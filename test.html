@@ -4,10 +4,8 @@
   </head>
   <body>
     <script type="text/javascript">
-      var p = Object.create(parser);
-      p.text = Loader.load("test.scm");
-      var result = p.parse();
-      document.write(result);
+      var text = Loader.load("test.scm");
+      Parser.newParser(text).parse();
     </script>
   </body>
 </html>

@@ -1,217 +1,232 @@
-function newCons(car, cdr){
-  return {
-    type : "cons",
-    car : car,
-    cdr : cdr,
-    setCdr : function(x){
-      this.cdr = x;
-    },
-    setCar : function(x){
-      this.car = x;
-    },
-    toString : function(){
-      var head = this;
-      var s = "(";
-      s += head.car.toString() + " ";
-      while ((head.cdr !== NULL) && (head.cdr.type == "cons")){
-        head = head.cdr;
+var Types = function(){
+
+  function newCons(car, cdr){
+    return {
+      type : "cons",
+      car : car,
+      cdr : cdr,
+      setCdr : function(x){
+        this.cdr = x;
+      },
+      setCar : function(x){
+        this.car = x;
+      },
+      toString : function(){
+        var head = this;
+        var s = "(";
         s += head.car.toString() + " ";
+        while ((head.cdr !== NULL_CONS) && (head.cdr.type == "cons")){
+          head = head.cdr;
+          s += head.car.toString() + " ";
+        }
+        if (head.cdr == NULL_CONS){
+          s += ")";
+        } else {
+          s += " . " + head.cdr.toString() + ")";
+        }
+        return s;
       }
-      if (head.cdr == NULL){
-        s += ")";
-      } else {
-        s += " . " + head.cdr.toString() + ")";
+    };
+  }
+
+  var NULL_CONS = {
+    type : "cons",
+    isNull : true,
+    toString : function(){
+      return "()";
+    },
+  };
+
+  function newString(value){
+    return  {
+      type : "string",
+      value : value,
+      toString : function(){
+        return "\"" + this.value + "\"";
       }
-      return s;
-    }
+    };
+  }
+
+  function newSymbol(value){
+    return  {
+      type : "symbol",
+      value : value,
+      toString : function(){
+        return this.value;
+      }
+    };
+  }
+
+  function newNumber(value){
+    return  {
+      type : "number",
+      value : value,
+      toString : function(){
+        return this.value;
+      }
+    };
+  }
+
+  function isNull(x){
+    return x == NULL_CONS;
+  }
+  function isList(x){
+    return x.type == "cons" && (x == NULL_CONS || isList(cdr(x)));
+  }
+  return {
+    newCons : newCons,
+    newString : newString,
+    newNumber : newNumber,
+    newSymbol : newSymbol,
+    NULL_CONS : NULL_CONS
   };
-}
+}();
 
-var NULL = {
-  type : "cons",
-  isNull : true,
-  toString : function(){
-    return "()";
-  },
-};
+var Parser = function(){
 
-function newString(value){
-  return  {
-    type : "string",
-    value : value,
-    toString : function(){
-      return "\"" + this.value + "\"";
-    }
-  };
-}
+  var WHITESPACE = " \t\n\r\f";
+  var DIGITS = "0123456789";
+  var NONSYMBOL = " \n\n\r\f()`\"\\[]'@,.";
+  var EOF = [];
 
-function newSymbol(value){
-  return  {
-    type : "symbol",
-    value : value,
-    toString : function(){
-      return this.value;
-    }
-  };
-}
+  function newParser(text){
+    return {
+      text : text,
+      last : text.length - 1,
+      position : 0,
+      parse : function(){
+        parse(this); //this calls parse(p) below.
+      }
+    };
+  }
 
-function newNumber(value){
-  return  {
-    type : "number",
-    value : value,
-    toString : function(){
-      return this.value;
-    }
-  };
-}
+  //all functions below operate on an object p returned from newParser
 
-function car(x){
-  return x.car;
-}
-
-function cdr(x){
-  return x.cdr;
-}
-
-function isNull(x){
-  return x == NULL;
-}
-function isList(x){
-  return x.type == "cons" && (x == NULL || isList(cdr(x)));
-}
-
-var parser = {
-  EOF : [],
-  text : "",
-  last : 0,
-  position : 0,
-  whitespace : " \t\n\r\f",
-  digits : "0123456789",
-  nonsymbol : " \n\n\r\f()`\"\\[]'@,.",
-
-  parse :  function(){
-    this.last = this.text.length - 1;
-    var p = this.parseNext();
-    while (p !== null){
-      Log.log(p); //.toString());
-      p = this.parseNext();
+  function parse(p){
+    var n = parseNext(p);
+    while (n !== null){
+      Log.log(n); //.toString());
+      n = parseNext(p);
     }
     Log.log("done");
-  },
+  }
 
-  parseNext : function (){
-    this.skip();
-    if (this.eof()){
+  function parseNext(p){
+    skip(p);
+    if (eof(p)){
       return null;
     }
 
-    var n = this.chr();
-    if (this.eof()){
+    var n = chr(p);
+    if (eof(p)){
       return null;
     } else if ("(" == n){
-      return this.parseExpression();
+      return parseExpression(p);
     } else if ("\"" == n) {
-      return this.parseString();
-    } else if (this.digits.indexOf(n)>-1){
-      return this.parseNumber();
-    } else if (this.nonsymbol.indexOf(n)<0){
-      return this.parseSymbol();
+      return parseString(p);
+    } else if (DIGITS.indexOf(n)>-1){
+      return parseNumber(p);
+    } else if (NONSYMBOL.indexOf(n)<0){
+      return parseSymbol(p);
     } else if ("." == n) {
       //only allowed within parseExpression
-      this.fwd();
+      fwd(p);
       return "."; 
     }
 
     return null;
-  },
+  }
 
-  parseExpression : function(){
-    this.fwd(); //skip past first "("
-    this.skip();//skip any whitespace after "("
+  function parseExpression(p){
+    fwd(p); //skip past first "("
+    skip(p);//skip any WHITESPACE after "("
     //empty list special case
-    if (this.chr() == ")"){
-      this.fwd();
-      return NULL;
+    var n = Types.NULL_CONS;
+    if (chr(p) == ")"){
+      fwd(p);
+      return n;
     }
 
-    var head = newCons(NULL, NULL);
+    var head = Types.newCons(n,n);
     var tail = head;
     var last = tail;
 
-    while (this.chr() !== ")"){
-      var v = this.parseNext();
+    while (chr(p) !== ")"){
+      var v = parseNext(p);
       if (v === "."){
-        last.setCdr(this.parseNext());
-        this.skip();
-        if (this.chr() !== ")"){
-          throw "expected ')' at " + this.position;
+        last.setCdr(parseNext(p));
+        skip(p);
+        if (chr(p) !== ")"){
+          throw "expected ')' at " + p.position;
         }
         break;
       } else {
         last = tail;
         tail.setCar(v);
-        tail.setCdr(newCons(NULL, NULL));
+        tail.setCdr(Types.newCons(n,n));
         tail = tail.cdr;
       }
     }
-    this.fwd();
+    fwd(p);
     return head;
-  },
+  }
 
-  parseString : function(){
+  function parseString(p){
     //we start on ", consume it
-    this.fwd();
-    var start = this.position;
-    while(this.chr() !== "\""){
-      this.fwd();
+    fwd(p);
+    var start = p.position;
+    while(chr(p) !== "\""){
+      fwd(p);
     }
-    var end = this.position;
+    var end = p.position;
 
-    this.fwd();
-    return newString(this.text.substring(start, end));
-  },
+    fwd(p);
+    return Types.newString(p.text.substring(start, end));
+  }
 
-  parseNumber : function(){
+  function parseNumber(p){
     var value = 0;
     var index = 0;
-    while((index = this.digits.indexOf(this.chr())) > -1){
+    while((index = DIGITS.indexOf(chr(p))) > -1){
       value = 10*value + index;
-      this.fwd();
+      fwd(p);
     }
-    return newNumber(value);
-  },
+    return Types.newNumber(value);
+  }
 
-  parseSymbol : function(){
-    var start = this.position;
-    this.fwd();
-    while (this.nonsymbol.indexOf(this.chr()) < 0){
-      this.fwd();
+  function parseSymbol(p){
+    var start = p.position;
+    fwd(p);
+    while (NONSYMBOL.indexOf(chr(p)) < 0){
+      fwd(p);
     }
-    return newSymbol(this.text.substring(start, this.position));
-  },
+    return Types.newSymbol(p.text.substring(start, p.position));
+  }
 
-  eof : function(){
-    return (this.position > this.last);
-  },
+  function eof(p){
+    return (p.position > p.last);
+  }
 
-  chr : function(){
-    if (!this.eof()){
-      return (this.text.charAt(this.position));
+  function chr(p){
+    if (!eof(p)){
+      return (p.text.charAt(p.position));
     } 
-    return this.EOF;
-  },
+    return EOF;
+  }
 
-  fwd : function(){
-    if (this.position <= this.last){
-      this.position++;
-    }
-  },
-
-  skip : function(){
-    while ((!this.eof()) && (this.whitespace.indexOf(this.chr()) > -1)){
-      this.fwd();
+  function fwd(p){
+    if (p.position <= p.last){
+      p.position++;
     }
   }
 
-};
+  function skip(p){
+    while ((!eof(p)) && (WHITESPACE.indexOf(chr(p)) > -1)){
+      fwd(p);
+    }
+  }
+  return { newParser : newParser};
+}();
+
+
 

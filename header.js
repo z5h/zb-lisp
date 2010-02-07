@@ -33,6 +33,7 @@ var Log = {
     document.write("<p><code>log: " + s + "</code></p>");
   }
 };
+
 Log.log("logging on");
 Loader.include("util.js");
 Loader.include("parser.js");
