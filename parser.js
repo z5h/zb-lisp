@@ -8,6 +8,21 @@ var Types = function(){
     },
   };
 
+  var T = {
+    type : "boolean",
+    value : true,
+    toString : function(){
+      return "#t";
+    }
+  };
+  
+  var F = {
+    type : "boolean",
+    value : false,
+    toString : function(){
+      return "#f";
+    }
+  };
 
   function newCons(car, cdr){
     return {
@@ -79,15 +94,20 @@ var Types = function(){
     newString : newString,
     newNumber : newNumber,
     newSymbol : newSymbol,
-    NULL_CONS : NULL_CONS
+    NULL_CONS : NULL_CONS,
+    T : T,
+    F : F
   };
 }();
 
 var Parser = function(){
 
   var WHITESPACE = " \t\n\r\f";
+  var NEWLINE = "\n\r";
+  var SEMICOLON = ";";
+  var HASH = "#";
   var DIGITS = "0123456789";
-  var NONSYMBOL = " \n\n\r\f()`\"\\[]'@,.";
+  var NONSYMBOL = " \n\n\r\f()`\"\\[]'@,.;#";
   var LPAREN = "(";
   var RPAREN = ")";
   var QUOTES = "\"";
@@ -109,12 +129,15 @@ var Parser = function(){
   //all functions below operate on an object p returned from newParser
 
   function parse(p){
+    var parsed = new Array();
     var n = parseNext(p);
     while (n !== null){
       Log.log(n); //.toString());
+      parsed[parsed.length] = n;
       n = parseNext(p);
     }
     Log.log("done");
+    return parsed;
   }
 
   function parseNext(p){
@@ -124,6 +147,17 @@ var Parser = function(){
     }
 
     var n = chr(p);
+
+    //skip comments
+    while (SEMICOLON === n){
+      n = fwdTo(p, NEWLINE);
+      if (n === EOF){
+        return null;
+      }
+      skip(p);
+      n = chr(p);
+    }
+
     if (eof(p)){
       return null;
     } else if (LPAREN === n){
@@ -134,6 +168,8 @@ var Parser = function(){
       return parseNumber(p);
     } else if (QUOTE === n){
       return parseQuote(p);
+    } else if (HASH === n){
+      return parseBoolean(p);
     } else if (NONSYMBOL.indexOf(n)<0){
       return parseSymbol(p);
     } else if (DOT === n) {
@@ -195,6 +231,20 @@ var Parser = function(){
     return Types.newCons(quote, Types.newCons(parseNext(p), Types.NULL_CONS));
   }
 
+  function parseBoolean(p){
+    fwd(p);
+    var c = chr(p);
+    if (c === 't'){
+      fwd(p);
+      return Types.T;
+    } else if (c === 'f'){
+      fwd(p);
+      return Types.F;
+    } else {
+      throw "expected 't' or 'f' at " + p.position; 
+    }
+  }
+
   function parseString(p){
     //we start on ", consume it
     fwd(p);
@@ -244,6 +294,15 @@ var Parser = function(){
     }
   }
 
+  function fwdTo(p, chars){
+    var c = chr(p);
+    while ((!eof(p)) && (chars.indexOf(c) < 0)){
+      fwd(p);
+      c = chr(p);
+    }
+    return c;
+  }
+
   function skip(p){
     while ((!eof(p)) && (WHITESPACE.indexOf(chr(p)) > -1)){
       fwd(p);
@@ -253,4 +312,6 @@ var Parser = function(){
 }();
 
 
-
+var Evaluator = function(){
+  return "nothing here yet";
+}();
