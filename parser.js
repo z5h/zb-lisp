@@ -526,7 +526,7 @@ var Evaluator = function(){
   }
 
   function isTail(x){
-    c.car === _return_;
+    x.car === _return_;
   }
 
   function compile(x, next){
