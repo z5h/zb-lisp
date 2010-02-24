@@ -10,14 +10,16 @@ var Types = function(){
 
   var T = {
     type : "boolean",
+    selfEval : true,
     value : true,
     toString : function(){
       return "#t";
     }
   };
-  
+
   var F = {
     type : "boolean",
+    selfEval : true,
     value : false,
     toString : function(){
       return "#f";
@@ -35,9 +37,16 @@ var Types = function(){
       setCar : function(x){
         this.car = x;
       },
+      get : function(i){
+        if (i === 0) {
+          return this.car;
+        } else {
+          return this.cdr.get(i-1);
+        }
+      },
       toString : function(){
         var head = this;
-        var s = "(";
+        var s = "()"[0];
         s += head.car.toString() + " ";
         while ((head.cdr !== NULL_CONS) && (head.cdr.type === "cons")){
           head = head.cdr;
@@ -53,9 +62,10 @@ var Types = function(){
     };
   }
 
-   function newString(value){
+  function newString(value){
     return  {
       type : "string",
+      selfEval : true,
       value : value,
       toString : function(){
         return "\"" + this.value + "\"";
@@ -63,22 +73,29 @@ var Types = function(){
     };
   }
 
+  var symbols = {};
   function newSymbol(value){
-    return  {
-      type : "symbol",
-      value : value,
-      toString : function(){
-        return this.value;
-      }
-    };
+    var symbol = symbols[value];
+    if (symbol === undefined){
+      symbol = {
+        type : "symbol",
+        value : value,
+        toString : function(){
+          return this.value;
+        }
+      };
+      symbols[value] = symbol;
+    }
+    return symbol;
   }
 
   function newNumber(value){
     return  {
       type : "number",
+      selfEval : true,
       value : value,
       toString : function(){
-        return this.value;
+        return this.value.toString();
       }
     };
   }
@@ -86,9 +103,11 @@ var Types = function(){
   function isNull(x){
     return x === NULL_CONS;
   }
+
   function isList(x){
     return x.type === "cons" && (x === NULL_CONS || isList(cdr(x)));
   }
+
   return {
     newCons : newCons,
     newString : newString,
@@ -100,6 +119,18 @@ var Types = function(){
   };
 }();
 
+Array.prototype.toCons = function(){
+  if (this.length === 0) {
+    return Types.NULL_CONS;
+  } else {
+    var head = Types.newCons(this[this.length - 1], Types.NULL_CONS);
+    for (var i = this.length -2; i>-1; i--){
+      head = Types.newCons(this[i], head);
+    }
+    return head;
+  }
+}
+
 var Parser = function(){
 
   var WHITESPACE = " \t\n\r\f";
@@ -108,12 +139,12 @@ var Parser = function(){
   var HASH = "#";
   var DIGITS = "0123456789";
   var NONSYMBOL = " \n\n\r\f()`\"\\[]'@,.;#";
-  var LPAREN = "(";
-  var RPAREN = ")";
+  var LPAREN = "()"[0];;
+  var RPAREN = "()"[1];
   var QUOTES = "\"";
   var QUOTE = "'";
   var DOT = ".";
-  var EOF = [];
+  var EOF = "EOF";
 
   function newParser(text){
     return {
@@ -121,7 +152,7 @@ var Parser = function(){
       last : text.length - 1,
       position : 0,
       parse : function(){
-        parse(this); //this calls parse(p) below.
+        return parse(this); //this calls parse(p) below.
       }
     };
   }
@@ -212,8 +243,8 @@ var Parser = function(){
     }
 
     var cons = improperList 
-               ? Types.newCons(data[data.length-2], data[data.length-1]) 
-               : Types.newCons(data[data.length-1], Types.NULL_CONS);
+    ? Types.newCons(data[data.length-2], data[data.length-1]) 
+    : Types.newCons(data[data.length-1], Types.NULL_CONS);
 
     var i = improperList ? data.length -3 : data.length - 2;
 
@@ -261,7 +292,7 @@ var Parser = function(){
   function parseNumber(p){
     var value = 0;
     var index = 0;
-    while((index = DIGITS.indexOf(chr(p))) > -1){
+    while((!eof(p)) && ((index = DIGITS.indexOf(chr(p))) > -1)){
       value = 10*value + index;
       fwd(p);
     }
@@ -308,10 +339,274 @@ var Parser = function(){
       fwd(p);
     }
   }
+
+
   return { newParser : newParser};
 }();
 
 
 var Evaluator = function(){
-  return "nothing here yet";
+
+  function s(str){
+    return Types.newSymbol(str);
+  }
+
+  var E_PARENT_KEY = "(PARENT)"; //illegal symbol name
+
+  var _return_ = [s("return")].toCons();
+  var _apply_  = [s('apply')].toCons();
+
+/*
+* a: the accumulator,
+* x: the next expression,
+* e: the current environment,
+* r: the current value rib, and
+* s: the current stack.
+*/
+  function newVM(a, x, e, r, s){
+    return {
+      a : a,
+      x : x,
+      e : e,
+      r : r,
+      s : s,
+
+      halt : function(){
+        return this.a;
+      },
+      refer : function(args){
+        var v = args.get(0);
+        var x = args.get(1);
+        this.a = lookup(v, this.e);
+        this.x = x;
+        return this;
+      },
+      constant : function(args){
+        this.a = args.get(0);
+        this.x = args.get(1);
+        return this;
+      },
+      close : function(args){
+        var vars = args.get(0);
+        var body = args.get(1);
+        var x = args.get(2);
+        this.a = closure(body, e, vars);
+        this.x = x;
+        return this;
+      },
+      test : function(args){ 
+        var thn = args.get(0);
+        var els = args.get(1);
+        if (this.a === Types.T){
+          this.x = thn;
+        } else {
+          this.x = els;
+        }
+        return this;
+      },
+      assign : function(args){ 
+        var v = args.get(0);
+        var x = args.get(1);
+        replace(v, this.a, this.e);
+        this.x = x;
+        return this;
+      },
+      conti : function(args){ 
+        var x = args.get(0);
+        this.a = continuation(this.s);
+        this.x = x;
+        return this;
+      },
+      nuate : function(args){ 
+        var s = args.get(0);
+        var v = args.get(1);
+        this.a = lookup(v, this.e);
+        this.x = _return_;
+        return this;
+      },
+      frame : function(args){ 
+        var ret = args.get(0);
+        var x = args.get(1);
+        this.r = [];
+        this.s = [ret, this.e, this.r, this.s].toCons();
+        return this;
+      },
+      argument : function(args){ 
+        var x = args.get(0);
+        this.x = x;
+        this.r.push(this.a);
+      },
+      apply : function(args){ 
+        var body = this.a.get(0);
+        var e = this.a.get(1);
+        var vars = this.a.get(2);
+
+        this.x = body;
+        this.e = extend(this.e, vars, this.r);
+        this.r = [];
+        return this;
+
+      },
+      return : function(args){ 
+        var x = this.s.get(0);
+        var e = this.s.get(1);
+        var r = this.s.get(2);
+        var s = this.s.get(3);
+
+        this.x = x;
+        this.e = e;
+        this.r = r;
+        this.s = s;
+
+        return this;
+      },
+      cycle : function(){
+        if (true){
+          Log.log('--------------------------------------');
+          Log.log('a'); Log.log(this.a);
+          Log.log('x'); Log.log(this.x);
+          Log.log('e'); Log.log(this.e);
+          Log.log('r'); Log.log(this.r);
+          Log.log('s'); Log.log(this.s);
+          Log.log('--------------------------------------');
+        }
+        var result = this;
+        var instruction;
+        var args;
+        while (result === this){
+          instruction = this.x.get(0);
+          args = this.x.cdr;
+          result = this[instruction](args);
+        }
+        return result;
+      }
+    };
+  }
+
+  function extend(e, vars, rib){
+    rib = rib.slice().reverse();
+    var ne = {E_PARENT_KEY: e};
+    for (var i=0; i<rib.length; i++){
+      ne[vars.get(i).value] = rib[i];
+    }
+    return ne;
+  }
+  function continuation(s){
+    return closure([s('nuate'), s, s('v')].toCons(), [{}], [s('v')].toCons()); 
+  }
+
+  function closure(body, e, vars){
+    return [body, e, vars].toCons();
+  }
+
+  function lookup(symbol, e){
+    var key = symbol.value;
+    while (e !== undefined){
+      var result = e[key];
+      if (result !== undefined){
+        return result;
+      }
+      e = e[E_PARENT_KEY];
+    }
+    return undefined;
+  }
+
+  function replace(symbol, val, e){
+    var key = symbol.value;
+    var e1 = e;
+    while (e !== undefined){
+      var result = e[key];
+      if (result !== undefined){
+        e[key] = val;
+        return;
+      }
+      e = e[E_PARENT_KEY];
+    }
+    e1[key] = val;
+  }
+
+  function isTail(x){
+    c.car === _return_;
+  }
+
+  function compile(x, next){
+    if (x.selfEval === true){
+      return [s('constant'), x, next].toCons();
+    } else if (x.type === 'symbol') {
+      return [s('refer'), x, next].toCons();
+    } else if (x.type === 'cons'){
+      return compileCons(x, next);  
+    } else {
+      throw "Unknown value : " + x;
+    }
+  }
+
+  function compileCons(x, next){
+    if (x.car.type === 'symbol'){
+      var op = x.car.value;
+
+      if (op === 'quote'){
+        return [s('constant'), x.cdr.car, next].toCons();
+      } else if (op === 'lambda') {
+        return [s('close'), x.cdr.car, compile(x.cdr.cdr.car, _return_), next].toCons();
+      } else if (op === 'if') {
+        var tst = x.cdr.car;
+        var thn = x.cdr.cdr.car;
+        var els = x.cdr.cdr.cdr.car
+        var thnc = compile(thn, next);
+        var elsc = compile(els, next);
+        return compile(tst, [s('test'), thnc, elsc].toCons());
+      } else if (op === 'set!') {
+        var v = x.cdr.car;
+        var expr = x.cdr.cdr.car;
+        return compile(expr, [s('assign'), v, next].toCons()); 
+      } else if (op === 'call/cc') {
+        var c = [s('conti'), [s('argument'), compile(x.cdr.car, _apply_)].toCons()].toCons();
+        if (isTail(next)) {
+          return c;
+        } else {
+          return ['frame', next, c].toCons();
+        }
+      }
+    } else if (x.car.type === 'cons'){
+      var args = x.cdr;
+      var c = compile(x.car, _apply_);
+      while (true){
+        if (args === Types.NULL_CONS){
+          if (isTail(next)){
+            return c;
+          } else {
+            return [s('frame'), next, c].toCons();
+          }
+        }
+        c = compile(args.car, [s('argument'), c].toCons());
+        args = args.cdr;
+      }
+    } else {
+      throw "unexpected value in car of application: " + x.car;
+    }
+  }
+
+  function evaluate(x, vm){
+    var compiled = compile(x, [s('halt')].toCons());
+    vm['x'] = compiled;
+    return vm.cycle();
+  }
+
+  function newEvaluator(){
+    return {
+      eval : function(x){
+        var result = Parser.newParser(x).parse();
+        for (var i=0; i<result.length; i++){
+
+          Log.log(evaluate(result[i], this.vm));
+        }
+      },
+      vm : newVM(undefined, undefined, {}, {}, [])
+    };
+  }
+
+  return {
+    newEvaluator : newEvaluator
+  };
 }();

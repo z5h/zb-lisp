@@ -30,7 +30,6 @@ var Loader = {
 var Log = {
   log : function(s){
     console.log(s);
-    document.write("<p><code>log: " + s + "</code></p>");
   }
 };
 
