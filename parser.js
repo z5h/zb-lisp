@@ -370,11 +370,11 @@ var Evaluator = function(){
 */
   function newVM(a, x, e, r, s){
     return {
-      a : a,
-      x : x,
-      e : e,
-      r : r,
-      s : s,
+      'a' : a,
+      'x' : x,
+      'e' : e,
+      'r' : r,
+      's' : s,
 
       /*
        * halt the VM and return the value in the accumulator
@@ -414,6 +414,7 @@ var Evaluator = function(){
         var vars = args.get(0);
         var body = args.get(1);
         var x = args.get(2);
+        
         this.a = closure(body, this.e, vars);
         this.x = x;
         return this;
@@ -499,18 +500,21 @@ var Evaluator = function(){
         return this;
       },
       /*
-       * applies the closure in the accumulator to the list of values in the
-       * current rib. Precisely, this instruction extends the closure’s environment with the closure’s
-       * variable list and the current rib, sets the current environment to
-       * this new environ- ment, sets the current rib to the empty list, and sets the next expression to the closure’s body.
+       * takes the closure in the accumulator and:
+       * extends the closure’s environment with the closure’s
+       * variable list and the current rib,
+       * sets the current environment to this new environment,
+       * sets the current rib to the empty list,
+       * sets the next expression to the closure’s body.
        */
       apply : function(){ 
         var body = this.a.get(0);
         var e = this.a.get(1);
         var vars = this.a.get(2);
 
-        this.x = body;
+        
         this.e = extend(e, vars, this.r);
+        this.x = body;
         this.r = [];
         return this;
 
@@ -551,7 +555,7 @@ var Evaluator = function(){
           Log.log("calling " + instruction + " args = " + args);
           //if (!confirm(""))
           //  return "break";
-          result = this[instruction](args);
+          result = (this[instruction]).apply(this, [args]);
         }
         Log.log("=============================================");
         return result;
@@ -579,12 +583,12 @@ var Evaluator = function(){
     var key = symbol.value;
     while (e !== undefined){
       var result = e[key];
-      if (result !== undefined){
+      if (result !== undefined && result !== null){
         return result;
       }
       e = e[E_PARENT_KEY];
     }
-    return undefined;
+    throw key + " not found";
   }
 
   function replace(symbol, val, e){
@@ -677,7 +681,7 @@ var Evaluator = function(){
           Log.log(r.toString());
         }
       },
-      vm : newVM(undefined, undefined, {}, [], [])
+      vm : newVM(null, null, {}, [], [])
     };
   }
 
@@ -690,6 +694,20 @@ var __e__ = null;
 function e(x){
   if (__e__ === null){
     __e__ = Evaluator.newEvaluator();
+    
   }
   return __e__.evaluate(x);
+}
+
+function init(){
+  e("" +
+        "(set! cons                     " +
+        "      (lambda (x y)            " +
+        "        (lambda (m) (m x y)))) " +
+        "(set! car                      " +
+        "      (lambda (z)              " +
+        "        (z (lambda (p q) p)))) " +
+        "(set! cdr                      " +
+        "      (lambda (z)              " +
+        "        (z (lambda (p q) q)))) ");
 }
