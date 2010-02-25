@@ -467,7 +467,7 @@ var Evaluator = function(){
         var instruction;
         var args;
         while (result === this){
-        if (false){
+        if (true){
           Log.log('--------------------------------------');
           Log.log('a'); Log.log(this.a);
           Log.log('x'); Log.log(this.x);
@@ -602,11 +602,12 @@ var Evaluator = function(){
       eval : function(x){
         var result = Parser.newParser(x).parse();
         for (var i=0; i<result.length; i++){
-
-          Log.log(evaluate(result[i], this.vm));
+          var r = evaluate(result[i], this.vm);
+          Log.log(r);
+          Log.log(r.toString());
         }
       },
-      vm : newVM(undefined, undefined, {}, {}, [])
+      vm : newVM(undefined, undefined, {}, [], [])
     };
   }
 
