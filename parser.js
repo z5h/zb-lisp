@@ -5,7 +5,7 @@ var Types = function(){
     isNull : true,
     toString : function(){
       return "()";
-    },
+    }
   };
 
   var T = {
@@ -139,7 +139,7 @@ var Parser = function(){
   var HASH = "#";
   var DIGITS = "0123456789";
   var NONSYMBOL = " \n\n\r\f()`\"\\[]'@,.;#";
-  var LPAREN = "()"[0];;
+  var LPAREN = "()"[0];
   var RPAREN = "()"[1];
   var QUOTES = "\"";
   var QUOTE = "'";
@@ -449,7 +449,7 @@ var Evaluator = function(){
         return this;
 
       },
-      return : function(args){ 
+      'return' : function(args){
         var x = this.s.get(0);
         var e = this.s.get(1);
         var r = this.s.get(2);
@@ -532,7 +532,7 @@ var Evaluator = function(){
   }
 
   function isTail(x){
-    x.car.type === 'symbol' && x.car.value === 'return';
+    return x.car.type === 'symbol' && x.car.value === 'return';
   }
 
   function compile(x, next){
@@ -575,7 +575,7 @@ var Evaluator = function(){
         }
       } else {
         var args = x.cdr;
-        var c = compile(x.car, _apply_);
+        c = compile(x.car, _apply_);
         while (true){
           if (args === Types.NULL_CONS){
             if (isTail(next)){
