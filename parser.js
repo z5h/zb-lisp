@@ -138,7 +138,7 @@ var Parser = function(){
   var SEMICOLON = ";";
   var HASH = "#";
   var DIGITS = "0123456789";
-  var NONSYMBOL = " \n\n\r\f()`\"\\[]'@,.;#";
+  var NONSYMBOL = " \n\r\f()`\"\\[]'@,.;#";
   var LPAREN = "()"[0];
   var RPAREN = "()"[1];
   var QUOTES = "\"";
@@ -235,6 +235,7 @@ var Parser = function(){
       } else {
         data[data.length] = v;
       }
+      skip(p);
     }
 
     if (data.length === 0){
@@ -280,8 +281,11 @@ var Parser = function(){
     //we start on ", consume it
     fwd(p);
     var start = p.position;
-    while(chr(p) !== QUOTES){
+    while((!eof(p)) && (chr(p) !== QUOTES)){
       fwd(p);
+    }
+    if (eof(p)){
+      throw "EOF reached before end of last string";
     }
     var end = p.position;
 
@@ -302,7 +306,7 @@ var Parser = function(){
   function parseSymbol(p){
     var start = p.position;
     fwd(p);
-    while (NONSYMBOL.indexOf(chr(p)) < 0){
+    while ((!eof(p)) && NONSYMBOL.indexOf(chr(p)) < 0){
       fwd(p);
     }
     return Types.newSymbol(p.text.substring(start, p.position));
@@ -371,9 +375,17 @@ var Evaluator = function(){
       r : r,
       s : s,
 
+      /*
+       * halt the VM and return the value in the accumulator
+       */
       halt : function(){
         return this.a;
       },
+      /*
+       * find value of variable v in the environment and places this into
+       * accumulator
+       * set next expression to x
+       */
       refer : function(args){
         var v = args.get(0);
         var x = args.get(1);
@@ -381,11 +393,22 @@ var Evaluator = function(){
         this.x = x;
         return this;
       },
+      /*
+       * places obj into the accumulator
+       * set next expression to x
+       */
       constant : function(args){
-        this.a = args.get(0);
-        this.x = args.get(1);
+        var obj = args.get(0);
+        var x = args.get(1);
+        this.a = obj;
+        this.x = x;
         return this;
       },
+      /*
+       * creates a closure from body, vars and the current environment,
+       * places the closure into the accumulator, and
+       * sets the next expression to x.
+       */
       close : function(args){
         var vars = args.get(0);
         var body = args.get(1);
@@ -394,6 +417,12 @@ var Evaluator = function(){
         this.x = x;
         return this;
       },
+
+      /*
+       * tests the accumulator
+       * if the accumulator is #t sets the next expression to thn.
+       * otherwise test sets the next expression to els
+       */
       test : function(args){ 
         var thn = args.get(0);
         var els = args.get(1);
@@ -404,6 +433,11 @@ var Evaluator = function(){
         }
         return this;
       },
+      /*
+       * changes the current environment binding for the variable v
+       * to the value in the accumulator.
+       * sets the next expression to x
+       */
       assign : function(args){ 
         var v = args.get(0);
         var x = args.get(1);
@@ -411,45 +445,80 @@ var Evaluator = function(){
         this.x = x;
         return this;
       },
+      /*
+       * creates a continuation from the current stack,
+       * places this continuation in the accumulator.
+       * sets the next expression to x
+       */
       conti : function(args){ 
         var x = args.get(0);
         this.a = continuation(this.s);
         this.x = x;
         return this;
       },
+      /*
+       * restores s to be the current stack
+       * sets the accumulator to the value of var in the current environment,
+       * sets the next expression to (return)
+       */
       nuate : function(args){ 
         var s = args.get(0);
         var v = args.get(1);
         this.a = lookup(v, this.e);
+        this.s = s;
         this.x = _return_;
         return this;
       },
+      /*
+       * creates a new frame from:
+       *   ret as the next expression,
+       *   the current environment,
+       *   the current rib,
+       *   and adds this frame to the current stack
+       * sets the current rib to the empty list,
+       * sets the next expression to x
+       */
       frame : function(args){ 
         var ret = args.get(0);
         var x = args.get(1);
-        this.r = [];
         this.s = [ret, this.e, this.r, this.s].toCons();
+        this.r = [];
         this.x = x;
         return this;
       },
+
+      /*
+       * adds the value in the accumulator to the current rib
+       * sets the next expression to x
+       */
       argument : function(args){ 
         var x = args.get(0);
         this.x = x;
         this.r.push(this.a);
         return this;
       },
-      apply : function(args){ 
+      /*
+       * applies the closure in the accumulator to the list of values in the
+       * current rib. Precisely, this instruction extends the closureÕs environment with the closureÕs
+       * variable list and the current rib, sets the current environment to
+       * this new environ- ment, sets the current rib to the empty list, and sets the next expression to the closureÕs body.
+       */
+      apply : function(){ 
         var body = this.a.get(0);
         var e = this.a.get(1);
         var vars = this.a.get(2);
 
         this.x = body;
-        this.e = extend(this.e, vars, this.r);
+        this.e = extend(e, vars, this.r);
         this.r = [];
         return this;
 
       },
-      'return' : function(args){
+      /*
+       * removes the first frame from the stack and resets the current
+       * environment, the current rib, the next expression, and the current stack
+       */
+      'return' : function(){
         var x = this.s.get(0);
         var e = this.s.get(1);
         var r = this.s.get(2);
@@ -497,8 +566,8 @@ var Evaluator = function(){
     }
     return ne;
   }
-  function continuation(s){
-    return closure([s('nuate'), s, s('v')].toCons(), [{}], [s('v')].toCons()); 
+  function continuation(stack){
+    return closure([s('nuate'), stack, s('v')].toCons(), [{}], [s('v')].toCons());
   }
 
   function closure(body, e, vars){
@@ -599,7 +668,7 @@ var Evaluator = function(){
 
   function newEvaluator(){
     return {
-      eval : function(x){
+      evaluate : function(x){
         var result = Parser.newParser(x).parse();
         for (var i=0; i<result.length; i++){
           var r = evaluate(result[i], this.vm);
@@ -615,3 +684,11 @@ var Evaluator = function(){
     newEvaluator : newEvaluator
   };
 }();
+
+var __e__ = null;
+function e(x){
+  if (__e__ === null){
+    __e__ = Evaluator.newEvaluator();
+  }
+  return __e__.evaluate(x);
+}
