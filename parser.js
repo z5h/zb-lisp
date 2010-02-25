@@ -390,7 +390,7 @@ var Evaluator = function(){
         var vars = args.get(0);
         var body = args.get(1);
         var x = args.get(2);
-        this.a = closure(body, e, vars);
+        this.a = closure(body, this.e, vars);
         this.x = x;
         return this;
       },
@@ -429,12 +429,14 @@ var Evaluator = function(){
         var x = args.get(1);
         this.r = [];
         this.s = [ret, this.e, this.r, this.s].toCons();
+        this.x = x;
         return this;
       },
       argument : function(args){ 
         var x = args.get(0);
         this.x = x;
         this.r.push(this.a);
+        return this;
       },
       apply : function(args){ 
         var body = this.a.get(0);
@@ -461,7 +463,11 @@ var Evaluator = function(){
         return this;
       },
       cycle : function(){
-        if (true){
+        var result = this;
+        var instruction;
+        var args;
+        while (result === this){
+        if (false){
           Log.log('--------------------------------------');
           Log.log('a'); Log.log(this.a);
           Log.log('x'); Log.log(this.x);
@@ -470,14 +476,14 @@ var Evaluator = function(){
           Log.log('s'); Log.log(this.s);
           Log.log('--------------------------------------');
         }
-        var result = this;
-        var instruction;
-        var args;
-        while (result === this){
-          instruction = this.x.get(0);
+          instruction = this.x.get(0).value;
           args = this.x.cdr;
+          Log.log("calling " + instruction + " args = " + args);
+          //if (!confirm(""))
+          //  return "break";
           result = this[instruction](args);
         }
+        Log.log("=============================================");
         return result;
       }
     };
@@ -526,23 +532,23 @@ var Evaluator = function(){
   }
 
   function isTail(x){
-    x.car === _return_;
+    x.car.type === 'symbol' && x.car.value === 'return';
   }
 
   function compile(x, next){
-    if (x.selfEval === true){
-      return [s('constant'), x, next].toCons();
-    } else if (x.type === 'symbol') {
+    if (x.type === 'symbol') {
       return [s('refer'), x, next].toCons();
     } else if (x.type === 'cons'){
       return compileCons(x, next);  
-    } else {
-      throw "Unknown value : " + x;
-    }
+    } else { //if (x.selfEval === true){
+      return [s('constant'), x, next].toCons();
+    } 
+    //else {
+    //  throw "Unknown value : " + x;
+    //}
   }
 
   function compileCons(x, next){
-    if (x.car.type === 'symbol'){
       var op = x.car.value;
 
       if (op === 'quote'){
@@ -567,28 +573,26 @@ var Evaluator = function(){
         } else {
           return ['frame', next, c].toCons();
         }
-      }
-    } else if (x.car.type === 'cons'){
-      var args = x.cdr;
-      var c = compile(x.car, _apply_);
-      while (true){
-        if (args === Types.NULL_CONS){
-          if (isTail(next)){
-            return c;
-          } else {
-            return [s('frame'), next, c].toCons();
+      } else {
+        var args = x.cdr;
+        var c = compile(x.car, _apply_);
+        while (true){
+          if (args === Types.NULL_CONS){
+            if (isTail(next)){
+              return c;
+            } else {
+              return [s('frame'), next, c].toCons();
+            }
           }
+          c = compile(args.car, [s('argument'), c].toCons());
+          args = args.cdr;
         }
-        c = compile(args.car, [s('argument'), c].toCons());
-        args = args.cdr;
       }
-    } else {
-      throw "unexpected value in car of application: " + x.car;
-    }
   }
 
   function evaluate(x, vm){
     var compiled = compile(x, [s('halt')].toCons());
+    Log.log(x + " -> " + compiled);
     vm['x'] = compiled;
     return vm.cycle();
   }
