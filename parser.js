@@ -378,14 +378,20 @@ var Evaluator = function(){
 
       /*
        * halt the VM and return the value in the accumulator
+       *
+       * [halt () a]
        */
       halt : function(){
         return this.a;
       },
+
       /*
        * find value of variable v in the environment and places this into
        * accumulator
        * set next expression to x
+       *
+       * [refer (var x)
+       *   (VM (car (lookup var e)) x e r s)]
        */
       refer : function(args){
         var v = args.get(0);
@@ -394,9 +400,13 @@ var Evaluator = function(){
         this.x = x;
         return this;
       },
+
       /*
        * places obj into the accumulator
        * set next expression to x
+       *
+       * [constant (obj x)
+       *   (VM obj x e r s)]
        */
       constant : function(args){
         var obj = args.get(0);
@@ -405,10 +415,14 @@ var Evaluator = function(){
         this.x = x;
         return this;
       },
+
       /*
        * creates a closure from body, vars and the current environment,
        * places the closure into the accumulator, and
        * sets the next expression to x.
+       *
+       * [close (vars body x)
+       *   (VM (closure body e vars) x e r s)]
        */
       close : function(args){
         var vars = args.get(0);
@@ -424,6 +438,9 @@ var Evaluator = function(){
        * tests the accumulator
        * if the accumulator is #t sets the next expression to thn.
        * otherwise test sets the next expression to els
+       *
+       * [test (then else)
+       *   (VM a (if a then else) e r s)]
        */
       test : function(args){ 
         var thn = args.get(0);
@@ -435,22 +452,33 @@ var Evaluator = function(){
         }
         return this;
       },
+
       /*
        * changes the current environment binding for the variable v
        * to the value in the accumulator.
        * sets the next expression to x
+       *
+       * [assign (var x)
+       *   (set-car! (lookup var e) a) (VM a x e r s)]
        */
       assign : function(args){ 
         var v = args.get(0);
         var x = args.get(1);
+        Log.log("assigning " + this.a + " to " + v );
+        Log.log("before ... "); Log.log(this.e);
         replace(v, this.a, this.e);
+        Log.log("after ... "); Log.log(this.e);
         this.x = x;
         return this;
       },
+
       /*
        * creates a continuation from the current stack,
        * places this continuation in the accumulator.
        * sets the next expression to x
+       *
+       * [conti (x)
+       *   (VM (continuation s) x e r s)]
        */
       conti : function(args){ 
         var x = args.get(0);
@@ -458,10 +486,14 @@ var Evaluator = function(){
         this.x = x;
         return this;
       },
+
       /*
        * restores s to be the current stack
        * sets the accumulator to the value of var in the current environment,
        * sets the next expression to (return)
+       *
+       * [nuate (s var)
+       *   (VM (car (lookup var e)) '(return) e r s)]
        */
       nuate : function(args){ 
         var s = args.get(0);
@@ -471,6 +503,7 @@ var Evaluator = function(){
         this.x = _return_;
         return this;
       },
+
       /*
        * creates a new frame from:
        *   ret as the next expression,
@@ -479,6 +512,9 @@ var Evaluator = function(){
        *   and adds this frame to the current stack
        * sets the current rib to the empty list,
        * sets the next expression to x
+       *
+       * [frame (ret x)
+       *   (VM a x e '() (call-frame ret e r s))]
        */
       frame : function(args){ 
         var ret = args.get(0);
@@ -492,6 +528,9 @@ var Evaluator = function(){
       /*
        * adds the value in the accumulator to the current rib
        * sets the next expression to x
+       *
+       * [argument (x)
+       *   (VM a x e (cons a r) s)]
        */
       argument : function(args){ 
         var x = args.get(0);
@@ -499,29 +538,38 @@ var Evaluator = function(){
         this.r.push(this.a);
         return this;
       },
+
       /*
        * takes the closure in the accumulator and:
-       * extends the closure’s environment with the closure’s
+       * extends the closure's environment with the closure's
        * variable list and the current rib,
        * sets the current environment to this new environment,
        * sets the current rib to the empty list,
-       * sets the next expression to the closure’s body.
+       * sets the next expression to the closure's body.
+       *
+       * [apply ()
+       *   (record a (body e vars)
+       *     (VM a body (extend e vars r) '() s))]
        */
       apply : function(){ 
         var body = this.a.get(0);
         var e = this.a.get(1);
         var vars = this.a.get(2);
 
-        
-        this.e = extend(e, vars, this.r);
         this.x = body;
+        this.e = extend(e, vars, this.r);
         this.r = [];
         return this;
 
       },
+
       /*
        * removes the first frame from the stack and resets the current
        * environment, the current rib, the next expression, and the current stack
+       *
+       *[return ()
+       *  (record s (x e r s)
+       *    (VM a x e r s))])))
        */
       'return' : function(){
         var x = this.s.get(0);
@@ -555,6 +603,8 @@ var Evaluator = function(){
           Log.log("calling " + instruction + " args = " + args);
           //if (!confirm(""))
           //  return "break";
+          var self = this;
+
           result = (this[instruction]).apply(this, [args]);
         }
         Log.log("=============================================");
@@ -565,6 +615,8 @@ var Evaluator = function(){
 
   function extend(e, vars, rib){
     rib = rib.slice().reverse();
+    Log.log("rib"); Log.log(rib);
+    Log.log("vars"); Log.log(vars);
     var ne = {E_PARENT_KEY: e};
     for (var i=0; i<rib.length; i++){
       ne[vars.get(i).value] = rib[i];
@@ -583,25 +635,30 @@ var Evaluator = function(){
     var key = symbol.value;
     while (e !== undefined){
       var result = e[key];
-      if (result !== undefined && result !== null){
+      if ((result !== undefined) && (result !== null)){
         return result;
       }
       e = e[E_PARENT_KEY];
     }
-    throw key + " not found";
+    Log.log("key not found in ...");
+    Log.log(e);
+    throw(key + " not found");
   }
 
   function replace(symbol, val, e){
     var key = symbol.value;
+    Log.log("key = " + key);
     var e1 = e;
     while (e !== undefined){
       var result = e[key];
       if (result !== undefined){
+        Log.log("e = "); Log.log(e);
         e[key] = val;
         return;
       }
       e = e[E_PARENT_KEY];
     }
+    Log.log("e = "); Log.log(e1);
     e1[key] = val;
   }
 
@@ -709,5 +766,7 @@ function init(){
         "        (z (lambda (p q) p)))) " +
         "(set! cdr                      " +
         "      (lambda (z)              " +
-        "        (z (lambda (p q) q)))) ");
+        "        (z (lambda (p q) q)))) " +
+        //"(car (cons 11 12)) ");
+        "");
 }
