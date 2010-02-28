@@ -35,4 +35,8 @@ var Log = {
 
 Log.log("logging on");
 Loader.include("util.js");
+Loader.include("types.js")
 Loader.include("parser.js");
+Loader.include("compiler.js");
+Loader.include("vm.js");
+Loader.include("init.js");
