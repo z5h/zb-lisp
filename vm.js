@@ -4,10 +4,9 @@ var Evaluator = function(){
   var s = Types.newSymbol;
   var list = Types.list;
 
-  var E_PARENT_KEY = "([parent])"; //illegal symbol name
-
   var _HALT_ = list(s('halt'));
-  
+  var _RETURN_ = list(s('return'));
+
   var cons = Types.newCons;
 
   /*

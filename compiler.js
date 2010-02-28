@@ -10,6 +10,7 @@ var Compiler = function(){
   var TEST = s('test');
   var FRAME = s('frame');
   var ARGUMENT = s('argument');
+  var CONTI = s('conti');
   var _RETURN_ = list(s('return'));
   var _APPLY_ = list(s('apply'));
 
@@ -53,7 +54,7 @@ var Compiler = function(){
       if (isTail(next)) {
         return c;
       } else {
-        return list('frame', next, c);
+        return list(FRAME, next, c);
       }
     } else {
       var args = x.cdr;
