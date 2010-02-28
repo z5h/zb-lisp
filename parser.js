@@ -31,10 +31,11 @@ var Parser = function(){
   //all functions below operate on an object p returned from newParser
 
   function parse(p){
+    Log.log("parsing... ");
     var parsed = new Array();
     var n = parseNext(p);
     while (n !== null){
-      Log.log(n); //.toString());
+      Log.log(n);
       parsed[parsed.length] = n;
       n = parseNext(p);
     }

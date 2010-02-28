@@ -29,8 +29,11 @@ var Loader = {
 
 var Log = {
   log : function(s){
-    console.log(s);
-  }
+    if (this.isEnabled){
+      console.log(s);
+    }
+  },
+  isEnabled : true
 };
 
 Log.log("logging on");

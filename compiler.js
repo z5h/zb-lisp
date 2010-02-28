@@ -3,6 +3,7 @@ var Compiler = function(){
   var list = Types.list;
   var s = Types.newSymbol;
 
+  var NATIVE = s('native');
   var REFER = s('refer');
   var CONSTANT = s('constant');
   var CLOSE = s('close');
@@ -19,7 +20,10 @@ var Compiler = function(){
   }
 
   function compile(x, next){
-    if (x.type === 'symbol') {
+    if ((typeof x) === 'function'){
+      return list(NATIVE, x, next);
+    }
+    else if (x.type === 'symbol') {
       return list(REFER, x, next);
     } else if (x.type === 'cons'){
       return compileCons(x, next);  

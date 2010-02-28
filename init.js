@@ -3,6 +3,36 @@ function e(x){
   if (__e__ === null){
     __e__ = Evaluator.newEvaluator();
 
+    __e__.addNative('=',
+      function(map){
+        var a = map['a'];
+        var b = map['b'];
+
+        return ((a === b) ||  (a.type === 'number'
+          && b.type === 'number'
+          && a.value === b.value))
+
+        ? Types.T : Types.F;
+      },
+      ['a','b']);
+
+    __e__.addNative('+',
+      function(map){
+        var a = map['a'];
+        var b = map['b'];
+
+        return Types.newNumber(a.value + b.value);
+      },
+      ['a','b']);
+
+    __e__.addNative('-',
+      function(map){
+        var a = map['a'];
+        var b = map['b'];
+
+        return Types.newNumber(a.value - b.value);
+      },
+      ['a','b']);
   }
   return __e__.evaluate(x);
 }

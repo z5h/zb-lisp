@@ -49,6 +49,25 @@ var Evaluator = function(){
         return this;
       },
 
+      'native' : function(args){
+        var f = args.get(0);
+        var x = args.get(1);
+        var vars = this.e.car.car;
+        var vals = this.e.car.cdr;
+
+        var map = {};
+        while (vars !== list()){
+          map[vars.car.value] = vals.car;
+          vars = vars.cdr;
+          vals = vals.cdr;
+        }
+
+
+        this.a = f.apply(this, [map]);
+        this.x = x;
+        return this;
+      },
+
       /*
        * places obj into the accumulator
        * set next expression to x
@@ -201,7 +220,9 @@ var Evaluator = function(){
        *   (record a (body e vars)
        *     (VM a body (extend e vars r) '() s))]
        */
-      apply : function(){ 
+      apply : function(){
+
+   
         var body = this.a.get(0);
         var e = this.a.get(1);
         var vars = this.a.get(2);
@@ -209,6 +230,7 @@ var Evaluator = function(){
         this.x = body;
         this.e = extend(e, vars, this.r);
         this.r = list();
+
         return this;
 
       },
@@ -239,18 +261,26 @@ var Evaluator = function(){
         var instruction;
         var args;
         while (result === this){
-          if (true){
+          if (Log.isEnabled){
             Log.log('--------------------------------------');
-            Log.log('a'); Log.log(this.a);
-            Log.log('x'); Log.log(this.x);
-            Log.log('e'); Log.log(this.e);
-            Log.log('r'); Log.log(this.r);
-            Log.log('s'); Log.log(this.s);
+            Log.log('a');
+            Log.log(this.a);
+            Log.log('x');
+            Log.log(this.x);
+            Log.log('e');
+            Log.log(this.e);
+            Log.log('r');
+            Log.log(this.r);
+            Log.log('s');
+            Log.log(this.s);
             Log.log('--------------------------------------');
           }
           instruction = this.x.get(0).value;
           args = this.x.cdr;
-          Log.log("calling " + instruction + " args = " + args);
+          if (Log.isEnabled){
+            Log.log("calling " + instruction + " args = " + args);
+          }
+
 
           result = (this[instruction]).apply(this, [args]);
         }
@@ -296,17 +326,60 @@ var Evaluator = function(){
     return vm.cycle();
   }
 
+
+  function createBuiltIn(name, f, vars, vm){
+    f['toString'] = function(){ return '<' + name + '>';};
+    evaluate(list(s('set!'), s(name), list(s('lambda'), vars, f)), vm);
+  }
+
   function newEvaluator(){
     return {
-      evaluate : function(x){
-        var result = Parser.newParser(x).parse();
-        for (var i=0; i<result.length; i++){
-          var r = evaluate(result[i], this.vm);
+      evaluate : function(x){        
+        var parsed = Parser.newParser(x).parse();
+        var result = [];
+        for (var i=0; i<parsed.length; i++){
+          var r = evaluate(parsed[i], this.vm);
           Log.log(r);
-          Log.log(r.toString());
+          result.push(r);
         }
+        return result;
       },
-      vm : newVM(list(), list(), list(), list(), list())
+      vm : newVM(list(), list(), list(), list(), list()),
+      init : function(){
+        createBuiltIn('=',
+          function(map){
+            var a = map['a'];
+            var b = map['b'];
+
+            return ((a === b) ||  (a.type === 'number'
+              && b.type === 'number'
+              && a.value === b.value))
+
+              ? Types.T : Types.F;
+          },
+          list(s('a') , s('b')), this.vm);
+
+        createBuiltIn('+',
+          function(map){
+            var a = map['a'];
+            var b = map['b'];
+
+            return Types.newNumber(a.value + b.value);
+          },
+          list(s('a') , s('b')), this.vm);
+
+        createBuiltIn('-',
+          function(map){
+            var a = map['a'];
+            var b = map['b'];
+
+            return Types.newNumber(a.value - b.value);
+          },
+          list(s('a') , s('b')), this.vm);
+
+
+        return this;
+      }
     };
   }
 
