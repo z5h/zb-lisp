@@ -39,26 +39,20 @@ var Types = function(){
     }
   };
 
-  var consToString = function() {
-    if (this.toStringing) {
-      return "[...]";
-    }
-    this.toStringing = true;
-    var head = this;
-    var s = "()"[0];
-    s += head.car.toString() + " ";
-    while ((head.cdr !== NULL_CONS) && (head.cdr.type === "cons")) {
-      head = head.cdr;
-      s += head.car.toString() + " ";
-    }
-    if (head.cdr === NULL_CONS) {
-      s += ")";
-    } else {
-      s += " . " + head.cdr.toString() + ")";
-    }
-    this.toStringing = false;
-    return s;
-  };
+	function iterator(cons){
+		return {
+      cons : cons,
+			next : function(){
+			  if (this.cons !== NULL_CONS){
+				  var v = this.cons.car;
+					this.cons = this.cons.cdr;
+					return v;
+				} else {
+				  throw "no more items";
+				}
+			}
+		}
+	}
 
   function newCons(car, cdr){
     return {
@@ -78,7 +72,29 @@ var Types = function(){
           return this.cdr.get(i-1);
         }
       },
-      toString : consToString
+      toString : function(){
+				if (this.toStringing) {
+					return "[...]";
+				}
+				this.toStringing = true;
+				var head = this;
+				var s = "(";
+				s += head.car.toString() + " ";
+				while ((head.cdr !== NULL_CONS) && (head.cdr.type === "cons")) {
+					head = head.cdr;
+					s += head.car.toString() + " ";
+				}
+				if (head.cdr === NULL_CONS) {
+					s += ")";
+				} else {
+					s += " . " + head.cdr.toString() + ")";
+				}
+				this.toStringing = false;
+				return s;
+			},
+			iter : function(){
+			  return iterator(this);
+			}
     };
   }
 
