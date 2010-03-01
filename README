@@ -1,10 +1,8 @@
+# Short Description:
 A Lispy language implemented in Javascript.
-Short term goals:
-1. get something working that one can write programs in.
-2. tail call optimization support.
-3. constinuations.
-4. JavaScript bridge.
 
-Long term goals:
-1. slowly work towards R5RS.
-2. make it faster.
+# Longer Description:
+* A JavaScript implementation of R. Kent Dybvig's Heap Based Scheme as described in Chapter 3 of "Three Implementation Models for Scheme". http://github.com/z5h/zb-lisp/raw/master/ThreeImplementationModelsForScheme.pdf
+* Supports tail call optimization and continuations.
+* Ability to implement Scheme functions with JavaScript functions.
+
