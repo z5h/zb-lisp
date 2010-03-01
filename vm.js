@@ -52,14 +52,12 @@ var Evaluator = function(){
       'native' : function(args){
         var f = args.get(0);
         var x = args.get(1);
-        var vars = this.e.car.car;
-        var vals = this.e.car.cdr;
+        var vars = f.vars;
 
         var map = {};
         while (vars !== list()){
-          map[vars.car.value] = vals.car;
+          map[vars.car.value] = lookup(vars.car, this.e).car;
           vars = vars.cdr;
-          vals = vals.cdr;
         }
 
 
@@ -329,6 +327,7 @@ var Evaluator = function(){
 
   function createBuiltIn(name, f, vars, vm){
     f['toString'] = function(){ return '<' + name + '>';};
+    f.vars = vars;
     evaluate(list(s('set!'), s(name), list(s('lambda'), vars, f)), vm);
   }
 
@@ -345,40 +344,8 @@ var Evaluator = function(){
         return result;
       },
       vm : newVM(list(), list(), list(), list(), list()),
-      init : function(){
-        createBuiltIn('=',
-          function(map){
-            var a = map['a'];
-            var b = map['b'];
-
-            return ((a === b) ||  (a.type === 'number'
-              && b.type === 'number'
-              && a.value === b.value))
-
-              ? Types.T : Types.F;
-          },
-          list(s('a') , s('b')), this.vm);
-
-        createBuiltIn('+',
-          function(map){
-            var a = map['a'];
-            var b = map['b'];
-
-            return Types.newNumber(a.value + b.value);
-          },
-          list(s('a') , s('b')), this.vm);
-
-        createBuiltIn('-',
-          function(map){
-            var a = map['a'];
-            var b = map['b'];
-
-            return Types.newNumber(a.value - b.value);
-          },
-          list(s('a') , s('b')), this.vm);
-
-
-        return this;
+      addNative : function(name, f, vars){
+        createBuiltIn(name, f, vars.map(function(x){return s(x);}).toCons(), this.vm);
       }
     };
   }

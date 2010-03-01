@@ -18,6 +18,7 @@ function e(x){
 
     __e__.addNative('+',
       function(map){
+        Log.log("mape is"); Log.log(map);
         var a = map['a'];
         var b = map['b'];
 

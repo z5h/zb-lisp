@@ -26,6 +26,22 @@ var Types = function(){
     }
   };
 
+  var consToString = function(){
+        var head = this;
+        var s = "()"[0];
+        s += head.car.toString() + " ";
+        while ((head.cdr !== NULL_CONS) && (head.cdr.type === "cons")){
+          head = head.cdr;
+          s += head.car.toString() + " ";
+        }
+        if (head.cdr === NULL_CONS){
+          s += ")";
+        } else {
+          s += " . " + head.cdr.toString() + ")";
+        }
+        return s;
+      };
+
   function newCons(car, cdr){
     return {
       type : "cons",
@@ -44,21 +60,7 @@ var Types = function(){
           return this.cdr.get(i-1);
         }
       },
-      toString : function(){
-        var head = this;
-        var s = "()"[0];
-        s += head.car.toString() + " ";
-        while ((head.cdr !== NULL_CONS) && (head.cdr.type === "cons")){
-          head = head.cdr;
-          s += head.car.toString() + " ";
-        }
-        if (head.cdr === NULL_CONS){
-          s += ")";
-        } else {
-          s += " . " + head.cdr.toString() + ")";
-        }
-        return s;
-      }
+      toString : consToString
     };
   }
 
