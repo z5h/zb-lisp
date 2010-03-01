@@ -39,21 +39,26 @@ var Types = function(){
     }
   };
 
-  var consToString = function(){
-        var head = this;
-        var s = "()"[0];
-        s += head.car.toString() + " ";
-        while ((head.cdr !== NULL_CONS) && (head.cdr.type === "cons")){
-          head = head.cdr;
-          s += head.car.toString() + " ";
-        }
-        if (head.cdr === NULL_CONS){
-          s += ")";
-        } else {
-          s += " . " + head.cdr.toString() + ")";
-        }
-        return s;
-      };
+  var consToString = function() {
+    if (this.toStringing) {
+      return "[...]";
+    }
+    this.toStringing = true;
+    var head = this;
+    var s = "()"[0];
+    s += head.car.toString() + " ";
+    while ((head.cdr !== NULL_CONS) && (head.cdr.type === "cons")) {
+      head = head.cdr;
+      s += head.car.toString() + " ";
+    }
+    if (head.cdr === NULL_CONS) {
+      s += ")";
+    } else {
+      s += " . " + head.cdr.toString() + ")";
+    }
+    this.toStringing = false;
+    return s;
+  };
 
   function newCons(car, cdr){
     return {

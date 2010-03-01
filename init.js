@@ -31,7 +31,6 @@ function e(x){
 
     __e__.addNative('+',
       function(map){
-        Log.log("mape is"); Log.log(map);
         var a = map['a'];
         var b = map['b'];
 
@@ -47,21 +46,31 @@ function e(x){
         return Types.newNumber(a.value - b.value);
       },
       ['a','b']);
+
+    __e__.addNative('cons',
+      function(map){
+        var a = map['a'];
+        var b = map['b'];
+
+        return Types.newCons(a, b);
+      },
+      ['a','b']);
+
+    __e__.addNative('car',
+      function(map){
+        var a = map['a'];
+
+        return a.car;
+      },
+      ['a']);
+   
+    __e__.addNative('cdr',
+      function(map){
+        var a = map['a'];
+
+        return a.cdr;
+      },
+      ['a']);
   }
   return __e__.evaluate(x);
-}
-
-function init(){
-  e("" +
-    "(set! cons                     " +
-    "      (lambda (x y)            " +
-    "        (lambda (m) (m x y)))) " +
-    "(set! car                      " +
-    "      (lambda (z)              " +
-    "        (z (lambda (p q) p)))) " +
-    "(set! cdr                      " +
-    "      (lambda (z)              " +
-    "        (z (lambda (p q) q)))) " +
-    //"(car (cons 11 12)) ");
-    "");
 }
