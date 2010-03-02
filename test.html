@@ -1,14 +1,6 @@
 <html>
   <head>
     <script type="text/javascript" src="header.js"></script>
-  </head>
-  <body>
-    <textarea id="src" cols="80" rows="8"></textarea>
-    <br />
-    <button onclick="go();">Run</button>
-    <button onclick="sample();">Run Example Code</button>
-    <br />
-    <textarea cols="80" rows="8" id="out"</textarea>
     <script type="text/javascript">
       function go(){
         var d = document;
@@ -37,6 +29,15 @@
         go();
       }
     </script>
+  </head>
+  <body>
+    <textarea id="src" cols="80" rows="8"></textarea>
+    <br />
+    <button onclick="go();">Run</button>
+    <button onclick="sample();">Run Example Code</button>
+    <br />
+    <textarea cols="80" rows="8" id="out"></textarea>
+    
 		<br />
 		Supported: quote, lambda, if, set!, call/cc, =, cons, car, cdr, null?, pair?, +, -, *, / 
   </body>
