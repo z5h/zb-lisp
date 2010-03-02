@@ -320,7 +320,11 @@ var Evaluator = function(){
   }
 
   function closure(body, e, vars){
-    return list(body, e, vars);
+		var c = list(body, e, vars);
+		c.toString = function(){
+			return list(s('compiled'), body, vars).toString();
+		};
+    return c;
   }
 
   function lookup(symbol, e){
