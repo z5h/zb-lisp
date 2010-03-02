@@ -73,6 +73,9 @@ var Types = function(){
         }
       },
       toString : function(){
+        if (this.compiled){
+          return "<compiled>";
+        }
 				if (this.toStringing) {
 					return "[...]";
 				}

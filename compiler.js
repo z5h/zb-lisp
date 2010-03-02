@@ -14,6 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 var Compiler = function(){
 
   var list = Types.list;
+  
   var s = Types.newSymbol;
 
   var NATIVE = s('native');

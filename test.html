@@ -3,9 +3,24 @@
     <script type="text/javascript" src="header.js"></script>
   </head>
   <body>
+    <textarea id="src" cols="80" rows="8"></textarea>
+    <br />
+    <button onclick="go();">Run</button>
+    <br />
+    <textarea cols="80" rows="8" id="out"</textarea>
     <script type="text/javascript">
-      //var text = Loader.load("test.scm");
-      //Parser.newParser(text).parse();
+      function go(){
+        var d = document;
+        var src = d.getElementById("src").value;
+        var results = e(src);
+
+        for (var i=0; i<results.length; i++){
+          var out = d.getElementById("out");
+          out.value =
+            out.value + results[i].toString() + "\n";
+          out.scrollTop = out.scrollHeight
+        }
+      }
     </script>
   </body>
 </html>

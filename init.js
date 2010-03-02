@@ -71,6 +71,30 @@ function e(x){
         return a.cdr;
       },
       ['a']);
+
+    __e__.addNative('null?',
+      function(map){
+        var a = map['a'];
+
+        return a === Types.NULL_CONS;
+      },
+      ['a']);
+
+    __e__.addNative('pair?',
+      function(map){
+        var a = map['a'];
+
+        return a.type === 'cons';
+      },
+      ['a']);
+
+    __e__.addNative('type',
+      function(map){
+        var a = map['a'];
+
+        return Types.newSymbol(a.type);
+      },
+      ['a']);
   }
   return __e__.evaluate(x);
 }

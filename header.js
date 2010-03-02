@@ -45,7 +45,7 @@ var Log = {
       console.log(s);
     }
   },
-  isEnabled : true
+  isEnabled : false
 };
 
 Log.log("logging on");
