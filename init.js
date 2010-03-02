@@ -16,7 +16,8 @@ function e(x){
   if (__e__ === null){
     __e__ = Evaluator.newEvaluator();
 
-    __e__.addNative('=',
+    if (true){
+      __e__.addNative('=',
       function(map){
         var a = map['a'];
         var b = map['b'];
@@ -47,6 +48,24 @@ function e(x){
       },
       ['a','b']);
 
+      __e__.addNative('*',
+      function(map){
+        var a = map['a'];
+        var b = map['b'];
+
+        return Types.newNumber(a.value * b.value);
+      },
+      ['a','b']);
+
+    __e__.addNative('/',
+      function(map){
+        var a = map['a'];
+        var b = map['b'];
+
+        return Types.newNumber(a.value / b.value);
+      },
+      ['a','b']);
+
     __e__.addNative('cons',
       function(map){
         var a = map['a'];
@@ -63,7 +82,7 @@ function e(x){
         return a.car;
       },
       ['a']);
-   
+
     __e__.addNative('cdr',
       function(map){
         var a = map['a'];
@@ -95,6 +114,8 @@ function e(x){
         return Types.newSymbol(a.type);
       },
       ['a']);
+    }
+    
   }
   return __e__.evaluate(x);
 }

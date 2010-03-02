@@ -6,6 +6,7 @@
     <textarea id="src" cols="80" rows="8"></textarea>
     <br />
     <button onclick="go();">Run</button>
+    <button onclick="sample();">Run Example Code</button>
     <br />
     <textarea cols="80" rows="8" id="out"</textarea>
     <script type="text/javascript">
@@ -21,7 +22,23 @@
           out.scrollTop = out.scrollHeight
         }
       }
+      function sample(){
+        var s = "; calculate 20! using applicative order Y combinator\n" +
+"(((lambda (r)\n" +
+"    ((lambda (f) (f f))\n" +
+"     (lambda (y)\n" +
+"       (r (lambda (x) ((y y) x))))))\n" +
+"  (lambda (fact)\n" +
+"    (lambda (n)\n" +
+"      (if\n" +
+"        (= 0 n) 1\n" +
+"        (* n (fact (- n 1))))))) 20)";
+        document.getElementById("src").value = s;
+        go();
+      }
     </script>
+		<br />
+		Supported: quote, lambda, if, set!, call/cc, =, cons, car, cdr, null?, pair?, +, - 
   </body>
 </html>
 

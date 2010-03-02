@@ -145,7 +145,7 @@ var Evaluator = function(){
         if (r !== list()){
           r.setCar(this.a);
         } else {
-          this.e= extend(this.e, list(v), list(this.a));
+          addToEnv(this.e, v, this.a);
         }
         this.x = x;
         return this;
@@ -278,7 +278,7 @@ var Evaluator = function(){
             Log.log('x');
             Log.log(this.x);
             Log.log('e');
-            Log.log(this.e);
+            Log.log(envToString(this.e));
             Log.log('r');
             Log.log(this.r);
             Log.log('s');
@@ -298,6 +298,21 @@ var Evaluator = function(){
         return result;
       }
     };
+  }
+
+  function envToString(e){
+    var s = "+\n";
+    if (e !== undefined && e !== Types.NULL_CONS){
+      var vars = e.car.car;
+      var vals = e.car.cdr;
+      while (vars !== Types.NULL_CONS){
+        s += vars.car.toString() + " = " + vals.car.toString() + "\n";
+        vars = vars.cdr;
+        vals = vals.cdr;
+      }
+      return s + envToString(e.cdr);
+    }
+    return "";
   }
 
   function continuation(stack){
@@ -329,6 +344,21 @@ var Evaluator = function(){
     return cons(cons(vars, vals), e);
   }
 
+  function addToEnv(e, vr, val){
+    var vars = e.car.car;
+    var vals = e.car.cdr;
+
+    var newVarTail = Types.newCons(vars.car, vars.cdr);
+    vars.setCdr(newVarTail);
+    vars.setCar(vr);
+
+
+    var newValTail = Types.newCons(vals.car, vals.cdr);
+    vals.setCdr(newValTail);
+    vals.setCar(val);
+    
+  }
+
   function evaluate(x, vm){
     var compiled = Compiler.compile(x, _HALT_);
     Log.log(x + " -> " + compiled);
@@ -355,7 +385,7 @@ var Evaluator = function(){
         }
         return result;
       },
-      vm : newVM(list(), list(), list(), list(), list()),
+      vm : newVM(list(), list(), cons(cons(list(s('_')), list(s('_'))), list()), list(), list()),
       addNative : function(name, f, vars){
         createBuiltIn(name, f, vars.map(function(x){return s(x);}).toCons(), this.vm);
       }
