@@ -74,6 +74,9 @@ var Evaluator = function(){
 
 
         this.a = f.apply(this, [map]);
+				if (this.a.type === undefined){
+					throw "unknown type returned by native function";
+				}
         this.x = x;
         return this;
       },

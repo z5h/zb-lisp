@@ -95,7 +95,7 @@ function e(x){
       function(map){
         var a = map['a'];
 
-        return a === Types.NULL_CONS;
+        return (a === Types.NULL_CONS) ? Types.T : Types.F;
       },
       ['a']);
 
@@ -103,7 +103,7 @@ function e(x){
       function(map){
         var a = map['a'];
 
-        return a.type === 'cons';
+        return (a.type === 'cons') ? Types.T : Types.F;
       },
       ['a']);
 
