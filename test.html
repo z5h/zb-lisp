@@ -11,9 +11,14 @@
           var out = d.getElementById("out");
           out.value =
             out.value + results[i].toString() + "\n";
-          out.scrollTop = out.scrollHeight
+          out.scrollTop = out.scrollHeight;
         }
-      }
+			}
+		  function zblispdisplay(s){
+			out.value =
+            out.value + s + "\n";
+          out.scrollTop = out.scrollHeight;
+			}
       function sample(){
         var s = "; calculate 20! using applicative order Y combinator\n" +
 "(((lambda (r)\n" +
