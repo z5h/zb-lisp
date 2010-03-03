@@ -20,8 +20,8 @@ var Loader = {
   },
 
   include : function(file){
-    Loader.include_browser(file);
-    //Loader.include_cl(file);
+    //Loader.include_browser(file);
+    Loader.include_cl(file);
   },
 
   include_cl : function(file){

@@ -22,9 +22,10 @@ var NativeFunctions = function() {
       body : function(map){
         var a = map['a'];
         var b = map['b'];
-        return ((a === b) ||  (a.type === 'number'
-          && b.type === 'number'
-          && a.value === b.value));
+        return bool(((a === b) ||  
+							(a.type === 'number'
+          			&& b.type === 'number'
+          			&& a.value === b.value)));
       }
     },
     { name : '+',
@@ -116,6 +117,7 @@ var NativeFunctions = function() {
   function addNativeFunctions(e) {
     for (var i=0; i < FUNCTIONS.length; i++){
       var f = FUNCTIONS[i];
+			f.body.name = f.name;
       e.addNative(f.name, f.body, f.vars);
     }
   }

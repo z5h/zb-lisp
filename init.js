@@ -14,12 +14,8 @@ var e = function(){
   var evaluator = Evaluator.newEvaluator();
   NativeFunctions.addTo(evaluator);
 
-	var init = true;
+	evaluator.evaluate(Loader.load("init.scm")); //this seems to cause problems when loaded before the page finishes loading. so we do it lazily
   return function(x){
-		if (init){
-			init = false;
-			e(Loader.load("init.scm")); //this seems to cause problems when loaded before the page finishes loading. so we do it lazily
-		}
     return evaluator.evaluate(x);
   }
 }();
