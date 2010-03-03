@@ -1,3 +1,5 @@
+(set! list (lambda x x))
+
 (set! map
 	(lambda (f l) 
 		(if (null? l) l 

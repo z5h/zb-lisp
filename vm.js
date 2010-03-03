@@ -241,7 +241,11 @@ var Evaluator = function(){
         var vars = this.a.get(2);
 
         this.x = body;
-        this.e = extend(e, vars, this.r);
+        if (vars.type === 'symbol'){
+          this.e = extend(e, list(vars), list(this.r));          
+        } else if (vars.type === 'cons'){
+          this.e = extend(e, vars, this.r);
+        }
         this.r = list();
 
         return this;
