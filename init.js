@@ -10,112 +10,16 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+var e = function(){
+  var evaluator = Evaluator.newEvaluator();
+  NativeFunctions.addTo(evaluator);
 
-var __e__ = null;
-function e(x){
-  if (__e__ === null){
-    __e__ = Evaluator.newEvaluator();
-
-    if (true){
-      __e__.addNative('=',
-      function(map){
-        var a = map['a'];
-        var b = map['b'];
-
-        return ((a === b) ||  (a.type === 'number'
-          && b.type === 'number'
-          && a.value === b.value))
-
-        ? Types.T : Types.F;
-      },
-      ['a','b']);
-
-    __e__.addNative('+',
-      function(map){
-        var a = map['a'];
-        var b = map['b'];
-
-        return Types.newNumber(a.value + b.value);
-      },
-      ['a','b']);
-
-    __e__.addNative('-',
-      function(map){
-        var a = map['a'];
-        var b = map['b'];
-
-        return Types.newNumber(a.value - b.value);
-      },
-      ['a','b']);
-
-      __e__.addNative('*',
-      function(map){
-        var a = map['a'];
-        var b = map['b'];
-
-        return Types.newNumber(a.value * b.value);
-      },
-      ['a','b']);
-
-    __e__.addNative('/',
-      function(map){
-        var a = map['a'];
-        var b = map['b'];
-
-        return Types.newNumber(a.value / b.value);
-      },
-      ['a','b']);
-
-    __e__.addNative('cons',
-      function(map){
-        var a = map['a'];
-        var b = map['b'];
-
-        return Types.newCons(a, b);
-      },
-      ['a','b']);
-
-    __e__.addNative('car',
-      function(map){
-        var a = map['a'];
-
-        return a.car;
-      },
-      ['a']);
-
-    __e__.addNative('cdr',
-      function(map){
-        var a = map['a'];
-
-        return a.cdr;
-      },
-      ['a']);
-
-    __e__.addNative('null?',
-      function(map){
-        var a = map['a'];
-
-        return (a === Types.NULL_CONS) ? Types.T : Types.F;
-      },
-      ['a']);
-
-    __e__.addNative('pair?',
-      function(map){
-        var a = map['a'];
-
-        return (a.type === 'cons') ? Types.T : Types.F;
-      },
-      ['a']);
-
-    __e__.addNative('type',
-      function(map){
-        var a = map['a'];
-
-        return Types.newSymbol(a.type);
-      },
-      ['a']);
-    }
-    
+	var init = true;
+  return function(x){
+		if (init){
+			init = false;
+			e(Loader.load("init.scm")); //this seems to cause problems when loaded before the page finishes loading. so we do it lazily
+		}
+    return evaluator.evaluate(x);
   }
-  return __e__.evaluate(x);
-}
+}();

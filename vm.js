@@ -62,6 +62,7 @@ var Evaluator = function(){
       },
 
       'native' : function(args){
+        alert("r = " + this.r.toString());
         var f = args.get(0);
         var x = args.get(1);
         var vars = f.vars;

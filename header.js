@@ -43,8 +43,8 @@ var Log = {
   log : function(s){
     if (this.isEnabled){
       console.log(s);
-    }
-  },
+		}
+	},
   isEnabled : false
 };
 
@@ -54,4 +54,5 @@ Loader.include("types.js")
 Loader.include("parser.js");
 Loader.include("compiler.js");
 Loader.include("vm.js");
+Loader.include("native.js");
 Loader.include("init.js");
