@@ -22,6 +22,7 @@ var Compiler = function(){
   var CONSTANT = s('constant');
   var CLOSE = s('close');
   var ASSIGN = s('assign');
+  var DEFINE = s('define');
   var TEST = s('test');
   var FRAME = s('frame');
   var ARGUMENT = s('argument');
@@ -46,6 +47,14 @@ var Compiler = function(){
     } 
   }
 
+  function compileLambdaBody(body, next){
+    if (body.cdr === Types.NULL_CONS){
+      return compile(body.car, next);
+    } else {
+      return compile(body.car, compileLambdaBody(body.cdr, next));
+    }
+  }
+
   function compileCons(x, next){
     var op = x.get(0).value;
 
@@ -53,12 +62,13 @@ var Compiler = function(){
       return list(CONSTANT, x.cdr.car, next);
     } else if (op === 'lambda') {
       var vars = x.get(1);
-      var body = x.get(2);
-      return list(CLOSE, vars, compile(body, _RETURN_), next);
+      var body = x.cdr.cdr;
+      
+      return list(CLOSE, vars, compileLambdaBody(body, _RETURN_), next);
     } else if (op === 'if') {
       var tst = x.get(1);
       var thn = x.get(2);
-      var els = x.get(3)
+      var els = x.get(3);
       var thnc = compile(thn, next);
       var elsc = compile(els, next);
       return compile(tst, list(TEST, thnc, elsc));
@@ -66,6 +76,10 @@ var Compiler = function(){
       var v = x.get(1);
       var expr = x.get(2);
       return compile(expr, list(ASSIGN, v, next));
+    } else if (op === 'define') {
+      var v = x.get(1);
+      var expr = x.get(2);
+      return compile(expr, list(DEFINE, v, next));
     } else if (op === 'call/cc') {
       var e = x.get(1);
       var c = list(CONTI, list(ARGUMENT, compile(e, _APPLY_)));

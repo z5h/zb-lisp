@@ -10,12 +10,50 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-var e = function(){
-  var evaluator = Evaluator.newEvaluator();
-  NativeFunctions.addTo(evaluator);
 
-	evaluator.evaluate(Loader.load("init.scm")); //this seems to cause problems when loaded before the page finishes loading. so we do it lazily
-  return function(x){
-    return evaluator.evaluate(x);
+var Loader = {
+  src : "src/",
+  load : function(file){
+    var client = new XMLHttpRequest();
+    client.open("GET", this.src + file, false);
+    client.send(null);
+    return client.responseText;
+  },
+
+  include : function(file){
+    //Loader.include_browser(file);
+    Loader.include_cl(file);
+  },
+
+  include_cl : function(file){
+    window.eval(Loader.load(file));
+  },
+
+  include_browser : function(filename) {
+    var head = document.getElementsByTagName('head')[0];
+
+    var script = document.createElement('script');
+    script.src = this.src + filename;
+    script.type = 'text/javascript';
+
+    head.appendChild(script);
   }
-}();
+};
+
+var Log = {
+  log : function(s){
+    if (this.isEnabled){
+      console.log(s);
+		}
+	},
+  isEnabled : false
+};
+
+Log.log("logging on");
+Loader.include("util.js");
+Loader.include("types.js");
+Loader.include("parser.js");
+Loader.include("compiler.js");
+Loader.include("vm.js");
+Loader.include("native.js");
+Loader.include("init.js");

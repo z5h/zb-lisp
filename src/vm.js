@@ -148,7 +148,20 @@ var Evaluator = function(){
         if (r !== list()){
           r.setCar(this.a);
         } else {
+          throw v.toString() + " not defined";
+        }
+        this.x = x;
+        return this;
+      },
+
+      define : function(args){
+        var v = args.get(0);
+        var x = args.get(1);
+        var r = lookup(v, cons(this.e.car , list()));
+        if (r === list()){
           addToEnv(this.e, v, this.a);
+        } else {
+          throw v.toString() + " already defined";
         }
         this.x = x;
         return this;
@@ -339,12 +352,16 @@ var Evaluator = function(){
     while (e !== nil){
       var vars = e.car.car;
       var vals = e.car.cdr;
-      while(vars != nil){
+      while(vars.car !== undefined){ //while we have a non-null-cons
         if (symbol === vars.car){
           return vals;
         }
         vars = vars.cdr;
         vals = vals.cdr;
+      }
+      if (vars === symbol){ //because of a lambda (x . y)
+        addToEnv(e, symbol, vals); //patch this e, and try again
+        return lookup(symbol, e);
       }
       e = e.cdr;
     }
@@ -358,21 +375,12 @@ var Evaluator = function(){
   function addToEnv(e, vr, val){
     var vars = e.car.car;
     var vals = e.car.cdr;
-
-    var newVarTail = Types.newCons(vars.car, vars.cdr);
-    vars.setCdr(newVarTail);
-    vars.setCar(vr);
-
-
-    var newValTail = Types.newCons(vals.car, vals.cdr);
-    vals.setCdr(newValTail);
-    vals.setCar(val);
-    
+    e.setCar(cons(cons(vr, e.car.car), cons(val, e.car.cdr)));
   }
 
   function evaluate(x, vm){
     var compiled = Compiler.compile(x, _HALT_);
-    Log.log(x + " -> " + compiled);
+    //Log.log(x + " -> " + compiled);
     vm['x'] = compiled;
     return vm.cycle();
   }
@@ -381,7 +389,7 @@ var Evaluator = function(){
   function createBuiltIn(name, f, vars, vm){
     f['toString'] = function(){ return '<' + name + '>';};
     f.vars = vars;
-    evaluate(list(s('set!'), s(name), list(s('lambda'), vars, f)), vm);
+    evaluate(list(s('define'), s(name), list(s('lambda'), vars, f)), vm);
   }
 
   function newEvaluator(){

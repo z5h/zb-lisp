@@ -1,27 +1,27 @@
-(set! list (lambda x x))
+(define list (lambda x x))
 
-(set! map
+(define map
 	(lambda (f l) 
 		(if (null? l) l 
 			(cons (f (car l)) 
 						(map f (cdr l))))))
 
-(set! foldr 
+(define foldr
 	(lambda (func end lst)
 		(if (null? lst)  
 			end
 			(func (car lst) (foldr func end (cdr lst))))))
 
-(set! foldl 
+(define foldl
 	(lambda (func accum lst)
 	(if (null? lst)
 		accum
 			(foldl func (func accum (car lst)) (cdr lst)))))
 
-(set! fold foldl)
-(set! reduce fold)
+(define fold foldl)
+(define reduce fold)
 
-(set! filter 
+(define filter
 	(lambda (pred lst)   
 	(foldr 
 		(lambda (x y) 
@@ -29,6 +29,6 @@
 					(cons x y) y)) 
 			'() lst)))
 
-(set! not 
+(define not 
 	(lambda (x)
 		(if x #f #t)))

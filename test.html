@@ -1,53 +1,53 @@
 <html>
-  <head>
-    <script type="text/javascript" src="header.js"></script>
+<head>
+    <script type="text/javascript" src="src/header.js"></script>
     <script type="text/javascript">
-      function go(){
-        var d = document;
-        var src = d.getElementById("src").value;
-        var results = e(src);
+        //loadZbLisp("src");
+        function go() {
+            var d = document;
+            var src = d.getElementById("src").value;
+            var results = e(src);
 
-        for (var i=0; i<results.length; i++){
-          var out = d.getElementById("out");
-          out.value =
-            out.value + results[i].toString() + "\n";
-          out.scrollTop = out.scrollHeight;
+            for (var i = 0; i < results.length; i++) {
+                var out = d.getElementById("out");
+                out.value =
+                out.value + results[i].toString() + "\n";
+                out.scrollTop = out.scrollHeight;
+            }
         }
-			}
-		  function zblispdisplay(s){
-			out.value =
+        function zblispdisplay(s) {
+            out.value =
             out.value + s + "\n";
-          out.scrollTop = out.scrollHeight;
-			}
-      function sample(){
-        var s = "; calculate 20! using applicative order Y combinator\n" +
-"(((lambda (r)\n" +
-"    ((lambda (f) (f f))\n" +
-"     (lambda (y)\n" +
-"       (r (lambda (x) ((y y) x))))))\n" +
-"  (lambda (fact)\n" +
-"    (lambda (n)\n" +
-"      (if\n" +
-"        (= 0 n) 1\n" +
-"        (* n (fact (- n 1))))))) 20)";
-        document.getElementById("src").value = s;
-        go();
-      }
+            out.scrollTop = out.scrollHeight;
+        }
+        function sample() {
+            var s = "; calculate 20! using applicative order Y combinator\n" +
+                    "(((lambda (r)\n" +
+                    "    ((lambda (f) (f f))\n" +
+                    "     (lambda (y)\n" +
+                    "       (r (lambda (x) ((y y) x))))))\n" +
+                    "  (lambda (fact)\n" +
+                    "    (lambda (n)\n" +
+                    "      (if\n" +
+                    "        (= 0 n) 1\n" +
+                    "        (* n (fact (- n 1))))))) 20)";
+            document.getElementById("src").value = s;
+            go();
+        }
     </script>
-  </head>
-  <body>
-    <textarea id="src" cols="80" rows="8"></textarea>
-    <br />
-    <button onclick="go();">Run</button>
-    <button onclick="sample();">Run Example Code</button>
-    <br />
-    <textarea cols="80" rows="8" id="out"></textarea>
-    
-		<br />
-		Supported: quote, lambda, if, set!, call/cc, =, cons, car, cdr, null?, pair?, +, -, *, / 
-    <script>
-          </script>
-  </body>
+</head>
+<body>
+<textarea id="src" cols="80" rows="8"></textarea>
+<br/>
+<button onclick="go();">Run</button>
+<button onclick="sample();">Run Example Code</button>
+<br/>
+<textarea cols="80" rows="8" id="out"></textarea>
+
+<br/>
+Supported: quote, lambda, if, set!, call/cc, =, cons, car, cdr, null?, pair?, +, -, *, /
+
+</body>
 
 </html>
 
