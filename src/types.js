@@ -13,6 +13,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 var Types = function(){
 
+  var UNDEFINED = {
+    type : "undefined",
+    selfEval: true,
+    toString : function(){
+      return "";
+    }
+  }
+
   var NULL_CONS = {
     type : "cons",
     isNull : true,
@@ -179,6 +187,7 @@ var Types = function(){
     NULL_CONS : NULL_CONS,
     T : T,
     F : F,
+    UNDEFINED : UNDEFINED,
     list : list
   };
 }();

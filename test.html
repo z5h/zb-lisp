@@ -16,9 +16,15 @@
             }
         }
         function zblispdisplay(s) {
-            out.value =
-            out.value + s + "\n";
+            out.value = out.value + s;
             out.scrollTop = out.scrollHeight;
+        }
+        function zblispnewline() {
+            out.value = out.value + "\n";
+            out.scrollTop = out.scrollHeight;
+        }
+        function test() {
+            e(Loader.load("test.scm"))
         }
         function sample() {
             var s = "; calculate 20! using applicative order Y combinator\n" +
@@ -41,6 +47,7 @@
 <br/>
 <button onclick="go();">Run</button>
 <button onclick="sample();">Run Example Code</button>
+<button onclick="test();">Run Tests</button>
 <br/>
 <textarea cols="80" rows="8" id="out"></textarea>
 

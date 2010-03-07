@@ -1,5 +1,5 @@
 /*
-Copyright © 2010, Mark Bolusmjak
+Copyright ï¿½ 2010, Mark Bolusmjak
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -119,7 +119,14 @@ var NativeFunctions = function() {
       body : function(map){
         var a = map['a'];
 				zblispdisplay(a.toString());
-        return a;
+        return Types.UNDEFINED;
+      }
+    },
+    { name : 'newline',
+      vars : [],
+      body : function(){
+				zblispnewline();
+        return Types.UNDEFINED;
       }
     }
 	];

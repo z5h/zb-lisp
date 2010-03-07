@@ -1,0 +1,20 @@
+((lambda ()
+   (define pass 0)
+   (define total 0)
+
+   (define assert 
+     (lambda (name expected actual)
+       (if (= expected actual)
+         ((lambda ()
+            (set! pass (+ 1 pass))
+            (set! total (+ 1 total))
+            (display "pass ")
+            (display name)
+            (newline)))
+         ((lambda ()
+            (set! total (+ 1 total))
+            (display "fail ")
+            (display name)
+            (newline))))))
+
+   (assert "not" #t (not #f))))
