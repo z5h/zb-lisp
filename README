@@ -6,3 +6,14 @@ A Lispy language implemented in Javascript.
 * Supports tail call optimization and continuations.
 * Ability to implement Scheme functions with JavaScript functions.
 
+Supported forms include:
+define, quote, lambda, if, set!, call/cc, =,
+cons, car, cdr, null?, pair?, 
++, -, *, /,
+map, foldl, foldr, list,
+display, newline,
+not,
+let, "named let", let*
+
+Macro support is the next big step. Things will likely be quiet here while I work through that.
+

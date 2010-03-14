@@ -14,9 +14,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 var Compiler = function(){
 
   var list = Types.list;
-  
+  var NULL = list();
   var s = Types.newSymbol;
+  var cons = Types.newCons;
 
+  var macros = {};
+
+  //VM Operations
   var NATIVE = s('native');
   var REFER = s('refer');
   var CONSTANT = s('constant');
@@ -29,6 +33,64 @@ var Compiler = function(){
   var CONTI = s('conti');
   var _RETURN_ = list(s('return'));
   var _APPLY_ = list(s('apply'));
+
+  //Language operations
+  var LAMBDA = s('lambda');
+  var QUOTE = s('quote');
+  var IF = s('if');
+  var SET_BANG = s('set!');
+  var CALL_CC = s('call/cc');
+  var LET = s('let');
+  var LET_STAR = s('let*');
+
+  function rewriteLet(x){
+    var vars = [];
+    var vals = [];
+    var defs;
+    //(let name ((var val) ...) body)
+    if (x.get(1).type === 'symbol'){
+      defs = x.get(2);
+      while(defs !== NULL){
+        vars.push(defs.car.car);
+        vals.push(defs.car.cdr.car);
+        defs = defs.cdr;
+      }
+      vals = vals.toCons();
+      vars = vars.toCons();
+      //((lambda ()
+      //  (define name (lambda (vars) body))
+      //  (name vals)))
+      return list(list(LAMBDA, list(),
+          list(DEFINE, x.get(1), list(LAMBDA, vars, x.get(3))),
+          cons(x.get(1), vals)));
+
+    //(let ((var val) ...) body)
+    } else {
+      defs = x.get(1);
+      while(defs !== NULL){
+        vars.push(defs.car.car);
+        vals.push(defs.car.cdr.car);
+        defs = defs.cdr;
+      }
+      vals = vals.toCons();
+      vars = vars.toCons();
+      //((lambda (vars) body) vals)
+      return cons(list(LAMBDA, vars, x.get(2)), vals);
+    }
+  }
+
+  function rewriteLetStar(x){
+    //(let* ((var val) ...) body)
+    var defs = x.get(1);
+    if (defs === NULL || defs.cdr === NULL){
+      return rewriteLet(x);
+    } else {
+      var firstDef = x.get(1).car;
+      var remaining = x.get(1).cdr;
+      return rewriteLet(list(LET, list(firstDef),
+          list(LET_STAR, remaining, x.get(2))));
+    }
+  }
 
   function isTail(x){
     return x.car.type === 'symbol' && x.car.value === 'return';
@@ -56,31 +118,34 @@ var Compiler = function(){
   }
 
   function compileCons(x, next){
-    var op = x.get(0).value;
+    var op = x.get(0);
 
-    if (op === 'quote'){
+    if (op === QUOTE){
       return list(CONSTANT, x.cdr.car, next);
-    } else if (op === 'lambda') {
+    } else if (op === LET) {
+      return compile(rewriteLet(x), next);
+    } else if (op === LET_STAR) {
+      return compile(rewriteLetStar(x), next);
+    } else if (op === LAMBDA) {
       var vars = x.get(1);
       var body = x.cdr.cdr;
-      
       return list(CLOSE, vars, compileLambdaBody(body, _RETURN_), next);
-    } else if (op === 'if') {
+    } else if (op === IF) {
       var tst = x.get(1);
       var thn = x.get(2);
       var els = x.get(3);
       var thnc = compile(thn, next);
       var elsc = compile(els, next);
       return compile(tst, list(TEST, thnc, elsc));
-    } else if (op === 'set!') {
-      var v = x.get(1);
-      var expr = x.get(2);
-      return compile(expr, list(ASSIGN, v, next));
-    } else if (op === 'define') {
-      var v = x.get(1);
-      var expr = x.get(2);
-      return compile(expr, list(DEFINE, v, next));
-    } else if (op === 'call/cc') {
+    } else if (op === SET_BANG) {
+      var set_v = x.get(1);
+      var set_expr = x.get(2);
+      return compile(set_expr, list(ASSIGN, set_v, next));
+    } else if (op === DEFINE) {
+      var def_v = x.get(1);
+      var def_expr = x.get(2);
+      return compile(def_expr, list(DEFINE, def_v, next));
+    } else if (op === CALL_CC) {
       var e = x.get(1);
       var c = list(CONTI, list(ARGUMENT, compile(e, _APPLY_)));
       if (isTail(next)) {
